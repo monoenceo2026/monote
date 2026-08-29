@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>保存・比較 | MONOTE</title>
+  <meta name="description" content="保存した企業を並べて比較し、条件の合う会社にまとめて相談できます。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+JP:wght@400;500;600&family=Noto+Serif+JP:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/compare.css">
+</head>
+<body class="page-compare">
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="index.html">MONOTE</a>
+      <form class="site-header__search" action="search.html" method="get" role="search">
+        <input type="search" name="q" placeholder="条件・キーワードで探す" aria-label="検索">
+      </form>
+      <div class="site-header__actions">
+        <a class="btn btn--box btn--outline" href="#">マイページ</a>
+        <a class="btn btn--box btn--outline" href="#">田中 様</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container-wide cmp-main">
+
+    <!-- ==================== page head ==================== -->
+    <div class="page-head">
+      <h1 class="page-head__ttl">保存・比較</h1>
+      <div class="page-head__actions">
+        <a class="c-btn" href="search.html">検索条件から追加</a>
+        <button class="c-btn" type="button" disabled>比較表を書き出す（Phase2）</button>
+      </div>
+    </div>
+
+    <!-- ==================== tabs ==================== -->
+    <div class="tabs" role="tablist" aria-label="保存・比較の切り替え">
+      <button class="tab is-active" type="button" role="tab" aria-selected="true">比較 <span data-cmp-count>3</span>社</button>
+      <button class="tab" type="button" role="tab" aria-selected="false">保存した企業 8</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-scroll="#savedArticles">保存した記事 5</button>
+      <button class="tab" type="button" role="tab" aria-selected="false">相談の履歴 2</button>
+    </div>
+
+    <!-- ==================== 基準の検索条件 ==================== -->
+    <div class="cond-row">
+      <div class="cond-row__left">
+        <p class="cond-row__label">比較の基準にしている検索条件</p>
+        <div class="cond-row__chips">
+          <span class="cond-chip">SUS304</span>
+          <span class="cond-chip">板金・レーザー</span>
+          <span class="cond-chip">1〜50個</span>
+          <span class="cond-chip">7日以内</span>
+        </div>
+      </div>
+      <a class="c-btn" href="search.html">条件を変更</a>
+    </div>
+
+    <!-- ==================== 比較テーブル ==================== -->
+    <div class="cmp-scroll reveal" id="cmpScroll">
+      <table class="cmp-table" id="cmpTable">
+        <colgroup>
+          <col class="col-label">
+          <col data-col="1">
+          <col data-col="2">
+          <col data-col="3">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="cmp-table__corner" scope="col">比較項目</th>
+            <th class="cmp-co" scope="col" data-col="1">
+              <div class="cmp-co__row">
+                <span class="ph-thumb cmp-co__logo" aria-hidden="true"></span>
+                <span class="cmp-co__name">○○製作所</span>
+                <span class="cmp-co__badge">確認済み</span>
+              </div>
+              <p class="cmp-co__meta">大阪府八尾市・30〜99名</p>
+            </th>
+            <th class="cmp-co" scope="col" data-col="2">
+              <div class="cmp-co__row">
+                <span class="ph-thumb cmp-co__logo" aria-hidden="true"></span>
+                <span class="cmp-co__name">○○金属工業</span>
+                <span class="cmp-co__badge">確認済み</span>
+              </div>
+              <p class="cmp-co__meta">兵庫県尼崎市・10〜29名</p>
+            </th>
+            <th class="cmp-co" scope="col" data-col="3">
+              <div class="cmp-co__row">
+                <span class="ph-thumb cmp-co__logo" aria-hidden="true"></span>
+                <span class="cmp-co__name">○○精機</span>
+              </div>
+              <p class="cmp-co__meta">大阪府東大阪市・10〜29名</p>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">条件の一致</th>
+            <td class="is-adv" data-col="1">5 / 5　すべて対応</td>
+            <td data-col="2">4 / 5　納期のみ不一致</td>
+            <td data-col="3">3/ 5　精度・納期が不一致</td>
+          </tr>
+          <tr>
+            <th scope="row">加工・工程</th>
+            <td data-col="1">レーザー／曲げ／TIG溶接／組立</td>
+            <td data-col="2">プレス／曲げ／スポット溶接</td>
+            <td data-col="3">レーザー／曲げ</td>
+          </tr>
+          <tr>
+            <th scope="row">対応材質</th>
+            <td data-col="1">SUS304・SUS316／SPCC／A5052</td>
+            <td data-col="2">SUS304／SPCC</td>
+            <td data-col="3">SUS304／A5052</td>
+          </tr>
+          <tr>
+            <th scope="row">対応ロット</th>
+            <td class="is-adv" data-col="1">1〜2,000個</td>
+            <td data-col="2">1〜500個</td>
+            <td data-col="3">10〜300個</td>
+          </tr>
+          <tr>
+            <th scope="row">加工精度</th>
+            <td class="is-adv" data-col="1">±0.05mm</td>
+            <td data-col="2">±0.1mm</td>
+            <td data-col="3">±0.1mm</td>
+          </tr>
+          <tr>
+            <th scope="row">対応サイズ</th>
+            <td data-col="1">板厚0.5〜0.6／1,500×3,000m</td>
+            <td data-col="2">板厚0.8〜4.0／1,200×2,400m</td>
+            <td data-col="3">板厚1.0〜3.0／1,000×2,000m</td>
+          </tr>
+          <tr>
+            <th scope="row">品質・認証</th>
+            <td class="is-adv" data-col="1">ISO9001／ISO14001／全数検査</td>
+            <td data-col="2">ISO9001</td>
+            <td data-col="3">自主検査のみ</td>
+          </tr>
+          <tr>
+            <th scope="row">標準納期</th>
+            <td class="is-adv" data-col="1">5〜10日（特急応相談）</td>
+            <td data-col="2">10〜14日</td>
+            <td data-col="3">14日〜</td>
+          </tr>
+          <tr>
+            <th scope="row">エリア</th>
+            <td data-col="1">全国発送</td>
+            <td data-col="2">関西中心／全国可</td>
+            <td data-col="3">関西のみ</td>
+          </tr>
+          <tr>
+            <th scope="row">価格帯の目安</th>
+            <td data-col="1">試作 3万円〜</td>
+            <td data-col="2">試作 2.5万円〜</td>
+            <td data-col="3">非公開</td>
+          </tr>
+          <tr>
+            <th scope="row">返信の速さ</th>
+            <td class="is-adv" data-col="1">平均 1営業日</td>
+            <td data-col="2">平均 3営業日</td>
+            <td data-col="3">実績なし</td>
+          </tr>
+          <tr>
+            <th scope="row">実績業種</th>
+            <td data-col="1">半誘導体／医療／食品機械</td>
+            <td data-col="2">建材／産業機械</td>
+            <td data-col="3">産業機械</td>
+          </tr>
+          <tr>
+            <th scope="row">記事・情報の鮮度</th>
+            <td class="is-adv" data-col="1">記事 7本／更新 2026.08.05</td>
+            <td data-col="2">記事 2本／更新 2026.07.22</td>
+            <td data-col="3">記事 0本／更新 2026.05.11</td>
+          </tr>
+          <tr class="cmp-table__memo">
+            <th scope="row">メモ</th>
+            <td data-col="1"><input class="memo-input" type="text" data-memo="seisakusho" placeholder="図面送付済み。R指定を要確認" aria-label="○○製作所へのメモ"></td>
+            <td data-col="2"><input class="memo-input" type="text" data-memo="kinzoku" placeholder="＋メモを追加" aria-label="○○金属工業へのメモ"></td>
+            <td data-col="3"><input class="memo-input" type="text" data-memo="seiki" placeholder="＋メモを追加" aria-label="○○精機へのメモ"></td>
+          </tr>
+          <tr class="cmp-table__actions">
+            <th></th>
+            <td data-col="1">
+              <a class="cmp-consult" href="inquiry.html">相談する</a>
+              <button class="cmp-remove" type="button" data-remove="1">外す</button>
+            </td>
+            <td data-col="2">
+              <a class="cmp-consult" href="inquiry.html">相談する</a>
+              <button class="cmp-remove" type="button" data-remove="2">外す</button>
+            </td>
+            <td data-col="3">
+              <a class="cmp-consult" href="inquiry.html">相談する</a>
+              <button class="cmp-remove" type="button" data-remove="3">外す</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="cmp-empty" id="cmpEmpty" hidden>比較中の企業はありません。検索結果から企業を追加してください。</p>
+
+    <!-- ==================== まとめて相談 ==================== -->
+    <section class="bulk reveal" id="bulkBox">
+      <div class="bulk__txt">
+        <h2 class="bulk__ttl"><span data-cmp-count>3</span>社にまとめて相談する</h2>
+        <p class="bulk__desc">同じ条件・同じ図面で一度に送れます。各社の返信はマイページに集約されます。</p>
+      </div>
+      <div class="bulk__btns">
+        <button class="bulk__mask" id="maskToggle" type="button" aria-pressed="false">社名を伏せて送る</button>
+        <a class="bulk__go" href="inquiry.html">まとめて相談する</a>
+      </div>
+    </section>
+
+    <!-- ==================== 保存した記事 ==================== -->
+    <section class="saved reveal" id="savedArticles">
+      <div class="sec-ttl">
+        <h2>保存した記事</h2>
+        <p class="note">5</p>
+      </div>
+      <div class="saved__grid" data-stagger="0.07">
+        <a class="saved-card reveal" href="article.html">
+          <div class="saved-card__tags">
+            <span class="tag" style="font-weight:400">板金</span>
+            <span class="tag" style="font-weight:400">SUS304</span>
+          </div>
+          <h3>SUS304の曲げ割れを減らすために…</h3>
+          <p>○○製作所・保存 2026.08.08</p>
+        </a>
+        <a class="saved-card reveal" href="article.html">
+          <div class="saved-card__tags">
+            <span class="tag" style="font-weight:400">見積</span>
+          </div>
+          <h3>板金の見積が遅くなる図面、早くなる図面</h3>
+          <p>○○製作所・2026.08.08</p>
+        </a>
+        <a class="saved-card reveal" href="article.html">
+          <div class="saved-card__tags">
+            <span class="tag" style="font-weight:400">検査</span>
+          </div>
+          <h3>全数検査と抜取検査の線引き</h3>
+          <p>○○精機・2026.08.02</p>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <img class="site-footer__logo" src="assets/img/monoen-symbol-metal.png" alt="モノエン">
+      <nav class="site-footer__nav">
+        <a href="signup.html">企業の方へ</a>
+        <a href="#">運営ポリシー</a>
+        <a href="#">記事ガイドライン</a>
+        <a href="#">お問い合わせ</a>
+      </nav>
+      <p class="site-footer__brand">MONOTE</p>
+      <p class="site-footer__copy">運営：株式会社モノエン</p>
+    </div>
+  </footer>
+
+  <script src="js/site.js"></script>
+  <script src="js/compare.js"></script>
+</body>
+</html>

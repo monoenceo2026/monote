@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>相談フォーム | MONOTE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+JP:wght@400;500;600&family=Noto+Serif+JP:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/inquiry.css">
+</head>
+<body class="page-inquiry">
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="index.html">MONOTE</a>
+      <div class="site-header__actions">
+        <a class="btn btn--box btn--outline" href="compare.html">保存・比較</a>
+        <a class="btn btn--box btn--outline" href="#">田中 様</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="inquiry container-wide">
+
+    <!-- ==================== step indicator ==================== -->
+    <div class="steps">
+      <ol class="steps__list">
+        <li class="steps__pill is-done">1　相談の種類</li>
+        <li class="steps__line" aria-hidden="true"></li>
+        <li class="steps__pill is-current" aria-current="step">2　条件を入力</li>
+        <li class="steps__line" aria-hidden="true"></li>
+        <li class="steps__pill">3　送信先の確認</li>
+      </ol>
+      <p class="steps__note" id="autosave-note">入力内容は自動保存されます</p>
+    </div>
+
+    <div class="inquiry__layout">
+      <form class="inquiry__main" id="inquiry-form" novalidate>
+
+        <!-- ========== 相談の種類 ========== -->
+        <section class="iq-section reveal" aria-labelledby="type-ttl">
+          <div class="sec-ttl"><h2 id="type-ttl">相談の種類</h2></div>
+          <div class="type-grid" role="radiogroup" aria-labelledby="type-ttl" data-stagger="0.05">
+            <button type="button" class="type-card is-selected" role="radio" aria-checked="true">
+              <span class="type-card__ttl">見積を依頼したい</span>
+              <span class="type-card__sub">図面あり／条件のみ どちらでも可</span>
+            </button>
+            <button type="button" class="type-card" role="radio" aria-checked="false">
+              <span class="type-card__ttl">対応できるか確認したい</span>
+              <span class="type-card__sub">可否だけ先に知りたい場合</span>
+            </button>
+            <button type="button" class="type-card" role="radio" aria-checked="false">
+              <span class="type-card__ttl">技術的に相談したい</span>
+              <span class="type-card__sub">設計・材質・工法の相談</span>
+            </button>
+            <button type="button" class="type-card" role="radio" aria-checked="false">
+              <span class="type-card__ttl">協力会社を探している</span>
+              <span class="type-card__sub">継続取引を前提とした相談</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- ========== 依頼の条件 ========== -->
+        <section class="iq-section reveal" aria-labelledby="cond-ttl">
+          <div class="sec-ttl">
+            <h2 id="cond-ttl">依頼の条件</h2>
+            <p class="note">検索した条件が引き継がれています</p>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label class="field__label" for="f-process">加工・工程<span class="req">※必須</span></label>
+              <div class="selectbox">
+                <select id="f-process" aria-label="加工・工程">
+                  <option selected>板金・レーザー切断／曲げ</option>
+                  <option>切削（マシニング／旋盤）</option>
+                  <option>プレス・絞り</option>
+                  <option>溶接・組立</option>
+                  <option>表面処理・めっき</option>
+                </select>
+                <span class="selectbox__view">板金・レーザー切断／曲げ</span>
+                <span class="selectbox__caret" aria-hidden="true"></span>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-material">材質<span class="req">※必須</span></label>
+              <div class="selectbox">
+                <select id="f-material" aria-label="材質">
+                  <option selected>ステンレス SUS304</option>
+                  <option>ステンレス SUS316</option>
+                  <option>鉄 SPCC</option>
+                  <option>アルミ A5052</option>
+                  <option>樹脂（POM／PEEKなど）</option>
+                </select>
+                <span class="selectbox__view">ステンレス SUS304</span>
+                <span class="selectbox__caret" aria-hidden="true"></span>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-lot">数量・ロット<span class="req">※必須</span></label>
+              <input class="input" id="f-lot" type="text" value="20個（試作）">
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-due">希望納期</label>
+              <input class="input" id="f-due" type="text" value="2026年8月25日まで">
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-size">サイズ・板厚</label>
+              <input class="input" id="f-size" type="text" placeholder="例：板厚1.5mm／300×400mm">
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-tol">要求精度</label>
+              <input class="input" id="f-tol" type="text" placeholder="例：±0.05mm">
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-budget">予算の目安</label>
+              <div class="selectbox">
+                <select id="f-budget" aria-label="予算の目安">
+                  <option selected data-placeholder>未定でも可</option>
+                  <option>〜10万円</option>
+                  <option>10〜50万円</option>
+                  <option>50〜100万円</option>
+                  <option>100万円以上</option>
+                </select>
+                <span class="selectbox__view is-placeholder">未定でも可</span>
+                <span class="selectbox__caret" aria-hidden="true"></span>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-use">用途・業種</label>
+              <div class="selectbox">
+                <select id="f-use" aria-label="用途・業種">
+                  <option selected>半導体製造装置</option>
+                  <option>医療機器</option>
+                  <option>食品機械</option>
+                  <option>自動車・輸送機器</option>
+                  <option>建築・内装</option>
+                  <option>その他</option>
+                </select>
+                <span class="selectbox__view">半導体製造装置</span>
+                <span class="selectbox__caret" aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="f-note">補足・背景</label>
+            <textarea class="textarea iq-textarea" id="f-note" rows="3" placeholder="現行品の曲げ割れを改善したく、Rの指定から相談したいです。図面は暫定的です。"></textarea>
+          </div>
+
+          <div class="field">
+            <p class="field__label" id="attach-label">図面・写真の添付</p>
+            <div class="dropzone" id="dropzone" aria-labelledby="attach-label">
+              <p class="dropzone__hint">ファイルをドラッグ&amp;ドロップ（PDF / DXF / STEP / 画像・20MBまで）</p>
+              <div class="dropzone__row">
+                <button type="button" class="btn btn--box btn--outline-thin dropzone__btn" id="file-btn">ファイルを選ぶ</button>
+                <p class="dropzone__hint">図面がなくても送信できます。</p>
+              </div>
+              <ul class="dropzone__files" id="file-list" hidden></ul>
+              <input type="file" id="file-input" multiple hidden accept=".pdf,.dxf,.step,.stp,image/*">
+            </div>
+          </div>
+
+          <div class="option-box">
+            <label class="opt">
+              <input type="checkbox" id="opt-anon" checked>
+              <span class="opt__box" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M4.6 10.4 8.2 14l7.2-7.6" stroke="currentColor" stroke-width="1.1"/></svg>
+              </span>
+              <span class="opt__ttl">社名を伏せて相談する</span>
+              <span class="opt__desc">送信先には条件・添付のみが届き、社名と担当者名は返信を承諾した時点で開示されます</span>
+            </label>
+            <label class="opt">
+              <input type="checkbox" id="opt-nofwd">
+              <span class="opt__box" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M4.6 10.4 8.2 14l7.2-7.6" stroke="currentColor" stroke-width="1.1"/></svg>
+              </span>
+              <span class="opt__ttl">添付図面を他社に転送しない</span>
+              <span class="opt__desc">複数社へ同時送信する場合の制御</span>
+            </label>
+          </div>
+        </section>
+
+        <!-- ========== 連絡先 ========== -->
+        <section class="iq-section reveal" aria-labelledby="contact-ttl">
+          <div class="sec-ttl"><h2 id="contact-ttl">連絡先</h2></div>
+          <div class="field-grid">
+            <div class="field">
+              <label class="field__label" for="f-company">会社名<span class="req">※必須</span></label>
+              <input class="input" id="f-company" type="text" placeholder="株式会社○○">
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-name">担当者名<span class="req">※必須</span></label>
+              <input class="input" id="f-name" type="text" placeholder="田中">
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-mail">メールアドレス<span class="req">※必須</span></label>
+              <input class="input" id="f-mail" type="email" placeholder="tanaka@example.co.jp">
+            </div>
+            <div class="field">
+              <label class="field__label" for="f-tel">電話番号（任意）</label>
+              <input class="input" id="f-tel" type="tel" placeholder="06-0000-0000">
+            </div>
+          </div>
+        </section>
+      </form>
+
+      <!-- ==================== sidebar ==================== -->
+      <aside class="inquiry__side">
+        <div class="side-card reveal" id="recipients-card">
+          <div class="side-card__head">
+            <h2 class="side-card__ttl">送信先  <span class="js-count">3</span>社</h2>
+            <a class="btn btn--box btn--outline" href="compare.html">変更</a>
+          </div>
+          <ul class="rec-list" id="rec-list">
+            <li class="rec">
+              <span class="ph-thumb rec__thumb" aria-hidden="true"></span>
+              <div class="rec__txt">
+                <p class="rec__name">○○製作所</p>
+                <p class="rec__meta">返信 平均1営業日</p>
+              </div>
+              <button type="button" class="rec__x" aria-label="○○製作所を送信先から外す">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M4 4l12 12M16 4L4 16" stroke="currentColor" stroke-width="0.9"/></svg>
+              </button>
+            </li>
+            <li class="rec">
+              <span class="ph-thumb rec__thumb" aria-hidden="true"></span>
+              <div class="rec__txt">
+                <p class="rec__name">○○金属工業</p>
+                <p class="rec__meta">返信 平均3営業日</p>
+              </div>
+              <button type="button" class="rec__x" aria-label="○○金属工業を送信先から外す">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M4 4l12 12M16 4L4 16" stroke="currentColor" stroke-width="0.9"/></svg>
+              </button>
+            </li>
+            <li class="rec">
+              <span class="ph-thumb rec__thumb" aria-hidden="true"></span>
+              <div class="rec__txt">
+                <p class="rec__name">○○精機</p>
+                <p class="rec__meta">返信 実績なし</p>
+              </div>
+              <button type="button" class="rec__x" aria-label="○○精機を送信先から外す">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M4 4l12 12M16 4L4 16" stroke="currentColor" stroke-width="0.9"/></svg>
+              </button>
+            </li>
+          </ul>
+          <hr class="side-card__line">
+          <p class="side-card__desc">同じ内容が<span class="js-count">3</span>社に同時送信されます。各社の返信はマイページの「相談の履歴」に集約されます。</p>
+        </div>
+
+        <div class="side-card reveal">
+          <h2 class="side-card__ttl">送信前の確認</h2>
+          <ul class="confirm-list">
+            <li>相談見積の依頼は無料です</li>
+            <li>MONOTEは仲介手数料は取りません（β板）</li>
+            <li>返信がない場合、3営業日後にお知らせします</li>
+            <li>技術情報の取り扱いは運営ポリシーに準じます</li>
+          </ul>
+          <button type="button" class="btn btn--box btn--dark btn--block side-card__send" id="send-btn"><span class="js-count">3</span>社に送信する</button>
+          <button type="button" class="btn btn--box btn--outline-thin btn--block side-card__draft" id="draft-btn">下書きとして保存</button>
+        </div>
+
+        <div class="side-card side-card--dashed reveal">
+          <h2 class="side-card__ttl side-card__ttl--sm">Phase2</h2>
+          <p class="side-card__desc">送信後の画面に「打ち合わせ日程を調整する」を追加（企業のカレンダーと連携し、その場で商談を確定させる）。有料オプション化の候補。</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <img class="site-footer__logo" src="assets/img/monoen-symbol-metal.png" alt="モノエン">
+      <nav class="site-footer__nav">
+        <a href="#">企業の方へ</a>
+        <a href="#">運営ポリシー</a>
+        <a href="#">記事ガイドライン</a>
+        <a href="#">お問い合わせ</a>
+      </nav>
+      <p class="site-footer__brand">MONOTE</p>
+      <p class="site-footer__copy">運営：株式会社モノエン</p>
+    </div>
+  </footer>
+
+  <script src="js/site.js"></script>
+  <script src="js/inquiry.js"></script>
+</body>
+</html>
