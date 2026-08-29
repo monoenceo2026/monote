@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MONOTE｜つくりたいものから、つくれる会社を探す。</title>
+  <meta name="description" content="加工方法・材質・ロット・精度・認証などの条件で、製造業の技術記事と企業情報をまとめて検索できます。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+JP:wght@400;500;600&family=Noto+Serif+JP:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/top.css">
+</head>
+<body class="page-top">
+
+  <header class="site-header -bg">
+    <div class="site-header__inner">
+      <a class="brand" href="index.html">MONOTE</a>
+      <nav class="site-header__nav" aria-label="グローバルナビゲーション">
+        <a href="search.html" class="is-active">企業を探す</a>
+        <a href="article.html">記事を読む</a>
+        <a href="#read">特集</a>
+        <a href="#stats">MONOTEとは</a>
+      </nav>
+      <div class="site-header__actions">
+        <a class="btn btn--pill btn--white" href="#">ログイン</a>
+        <a class="btn btn--pill btn--dark" href="signup.html">無料で企業登録</a>
+      </div>
+      <button class="menu-btn" type="button" aria-label="メニュー" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <div class="sp-menu" hidden>
+    <nav>
+      <a href="search.html">企業を探す</a>
+      <a href="article.html">記事を読む</a>
+      <a href="#read">特集</a>
+      <a href="#stats">MONOTEとは</a>
+      <a class="btn btn--pill btn--dark btn--block" href="signup.html">無料で企業登録</a>
+    </nav>
+  </div>
+
+  <main>
+    <!-- ==================== FV / hero ==================== -->
+    <section class="hero">
+      <div class="hero__motion" aria-hidden="true">
+        <!-- meets.ltd-inspired: big Monoen symbol, morphing / scroll-reactive -->
+        <svg class="hero-blob" viewBox="0 0 306 380" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="blobGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ffffff"/>
+              <stop offset="1" stop-color="#f7f7f7"/>
+            </linearGradient>
+          </defs>
+          <path fill="url(#blobGrad)" d=""/>
+        </svg>
+        <!-- metallic Monoen symbols (per Figma) -->
+        <img class="hero-metal hero-metal--tl" src="assets/img/monoen-symbol-metal.png" alt="">
+        <img class="hero-metal hero-metal--r" src="assets/img/monoen-symbol-metal.png" alt="">
+      </div>
+
+      <div class="hero__body">
+        <h1 class="hero__title">
+          <span class="hero__title-line"><span>つくりたいものから、<br class="sp-br">つくれる会社を探す。</span></span>
+        </h1>
+        <p class="hero__lead">加工方法・材質・ロット・精度・認証などの条件で、製造業の技術記事と企業情報をまとめて検索できます。</p>
+
+        <form class="hero__search" action="search.html" method="get" role="search">
+          <input class="hero__search-input" type="search" name="q" placeholder="例：SUS304の薄板を、小ロット・短納期で加工したい" aria-label="条件・キーワードで検索">
+          <button class="hero__search-btn" type="submit">検索</button>
+        </form>
+
+        <div class="hero__tags">
+          <p class="hero__tags-label">よく使われる条件</p>
+          <div class="hero__tags-list">
+            <a class="chip" href="search.html">小ロット・1個から</a>
+            <a class="chip" href="search.html">試作対応</a>
+            <a class="chip" href="search.html">短納期</a>
+            <a class="chip" href="search.html">ISO9001</a>
+            <a class="chip" href="search.html">ステンレス</a>
+            <a class="chip" href="search.html">高精度±0.01mm</a>
+            <a class="chip" href="search.html">関西エリア</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero__logos" aria-label="掲載企業">
+        <div class="hero__logos-track">
+          <img src="assets/img/logoipsum.png" alt="掲載企業ロゴ">
+          <img src="assets/img/logoipsum.png" alt="">
+          <img src="assets/img/logoipsum.png" alt="">
+          <img src="assets/img/logoipsum.png" alt="">
+          <img src="assets/img/logoipsum.png" alt="">
+          <img src="assets/img/logoipsum.png" alt="">
+          <img src="assets/img/logoipsum.png" alt="">
+          <img src="assets/img/logoipsum.png" alt="">
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 何を探すか決まっていない方へ ==================== -->
+    <section class="cats container" id="cats">
+      <div class="cats__ttl reveal">
+        <div class="sec-ttl">
+          <h2>何を探すか決まっていない方へ</h2>
+          <p class="note">やりたいことから選ぶ</p>
+        </div>
+        <p class="cats__note">かっこ内は業界での呼び方です</p>
+      </div>
+      <div class="cats__grid" data-stagger="0.07">
+        <a class="cat-card reveal" href="search.html">
+          <img src="assets/img/cat-kezuru.png" alt="">
+          <h3>削る・切る</h3>
+          <p>試作したい／量産したい／コストを下げたい</p>
+        </a>
+        <a class="cat-card reveal" href="search.html">
+          <img src="assets/img/cat-mageru.png" alt="">
+          <h3>曲げる・つなぐ</h3>
+          <p>板金／プレス／溶接</p>
+        </a>
+        <a class="cat-card reveal -sp-hide" href="search.html">
+          <img src="assets/img/cat-nagashikomu.png" alt="">
+          <h3>かたちを流し込む</h3>
+          <p>鋳造／鍛造／樹脂成形</p>
+        </a>
+        <a class="cat-card reveal" href="search.html">
+          <img src="assets/img/cat-hyomen.png" alt="">
+          <h3>表面を整える</h3>
+          <p>表面処理／めっき／アルマイト／熱処理</p>
+        </a>
+        <a class="cat-card reveal" href="search.html">
+          <img src="assets/img/cat-kumitateru.png" alt="">
+          <h3>組み立てる</h3>
+          <p>組立／量産／装置・機械</p>
+        </a>
+        <a class="cat-card reveal -sp-hide" href="search.html">
+          <img src="assets/img/cat-hakaru.png" alt="">
+          <h3>測る・確かめる</h3>
+          <p>検査／品質管理／測定</p>
+        </a>
+        <a class="cat-card reveal" href="search.html">
+          <img src="assets/img/cat-zairyo.png" alt="">
+          <h3>材料から探す</h3>
+          <p>鉄／ステンレス／アルミ／樹脂／繊維</p>
+        </a>
+        <a class="cat-card reveal" href="search.html">
+          <img src="assets/img/cat-mokuteki.png" alt="">
+          <h3>目的から探す</h3>
+          <p>試作したい／量産したい／コストを下げたい</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- ==================== 読んで探す ==================== -->
+    <section class="read container" id="read">
+      <div class="read__ttl reveal">
+        <div class="sec-ttl">
+          <h2>読んで探す</h2>
+          <p class="note">技術記事・現場の事例</p>
+        </div>
+        <a class="btn btn--pill btn--ghost" href="article.html">記事一覧をすべて見る</a>
+      </div>
+      <div class="read__grid" data-stagger="0.07">
+        <a class="article-card reveal" href="article.html">
+          <div class="ph-thumb article-card__thumb"><span>記事サムネイル</span></div>
+          <div class="article-card__body">
+            <div class="article-card__tags">
+              <span class="tag" style="font-weight:400">表面処理</span>
+              <span class="tag" style="font-weight:400">アルミ</span>
+            </div>
+            <h3>削る・切るアルマイトの色ムラを抑えるために、前処理で変えた3つのこと</h3>
+            <p>株式会社○○技研・2026.08.05</p>
+          </div>
+        </a>
+        <a class="article-card reveal" href="article.html">
+          <div class="ph-thumb article-card__thumb"><span>記事サムネイル</span></div>
+          <div class="article-card__body">
+            <div class="article-card__tags">
+              <span class="tag" style="font-weight:400">板金</span>
+              <span class="tag" style="font-weight:400">小ロット</span>
+            </div>
+            <h3>1個から受ける板金試作、見積が早い会社は何を決めているか</h3>
+            <p>○○製作所・2026.08.03</p>
+          </div>
+        </a>
+        <a class="article-card reveal" href="article.html">
+          <div class="ph-thumb article-card__thumb"><span>記事サムネイル</span></div>
+          <div class="article-card__body">
+            <div class="article-card__tags">
+              <span class="tag" style="font-weight:400">検査</span>
+              <span class="tag" style="font-weight:400">ISO9001</span>
+            </div>
+            <h3>全数検査と抜取検査、医療部品でどう線を引いているか</h3>
+            <p>○○精機・2026.07.29</p>
+          </div>
+        </a>
+        <a class="article-card reveal" href="article.html">
+          <div class="ph-thumb article-card__thumb"><span>記事サムネイル</span></div>
+          <div class="article-card__body">
+            <div class="article-card__tags">
+              <span class="tag" style="font-weight:400">繊維</span>
+              <span class="tag" style="font-weight:400">量産</span>
+            </div>
+            <h3>染色ロットの下限を下げるために設備をどう組み替えたか</h3>
+            <p>○○晒染・2026.07.27</p>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- ==================== stats ==================== -->
+    <section class="stats container reveal" id="stats">
+      <p><strong>掲載企業 128社</strong>　/　技術記事 342本　/　最終更新 2026.08.09</p>
+      <p>検索・閲覧に会員登録は不要です。企業登録・記事投稿も無料。</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <img class="site-footer__logo" src="assets/img/monoen-symbol-metal.png" alt="モノエン">
+      <nav class="site-footer__nav">
+        <a href="signup.html">企業の方へ</a>
+        <a href="#">運営ポリシー</a>
+        <a href="#">記事ガイドライン</a>
+        <a href="#">お問い合わせ</a>
+      </nav>
+      <p class="site-footer__brand">MONOTE</p>
+      <p class="site-footer__copy">運営：株式会社モノエン</p>
+    </div>
+  </footer>
+
+  <div class="sp-cta">
+    <a class="btn btn--pill btn--dark btn--block btn--lg" href="signup.html">無料で企業登録</a>
+  </div>
+
+  <script src="js/site.js"></script>
+  <script src="js/top.js"></script>
+</body>
+</html>
