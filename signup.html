@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>企業登録（対応条件） | MONOTE</title>
+  <meta name="description" content="御社が「どんな条件で探されるか」を決めます。入力した項目がそのまま検索の絞り込み条件になります。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+JP:wght@400;500;600&family=Noto+Serif+JP:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/signup.css">
+</head>
+<body class="page-signup">
+
+  <header class="signup-header">
+    <div class="signup-header__inner">
+      <a class="brand" href="index.html">MONOTE</a>
+      <div class="signup-header__right">
+        <p class="signup-header__note">登録は無料です。途中でやめても内容は保存されます。</p>
+        <a class="btn btn--box btn--outline" href="index.html">あとで続ける</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="signup-main">
+
+    <!-- ======= intro / steps ======= -->
+    <div class="signup-intro container-wide reveal">
+      <div class="signup-intro__txt">
+        <h1>御社が「どんな条件で探されるか」を決めます</h1>
+        <p>ここで入力した項目が、そのまま検索の絞り込み条件になります。あとから何度でも編集できます。</p>
+      </div>
+      <ol class="steps" aria-label="登録ステップ">
+        <li class="step is-done">1　会社の基本情報<span class="step__check" aria-hidden="true">✓</span></li>
+        <li class="steps__line" aria-hidden="true"></li>
+        <li class="step is-active" aria-current="step">2　対応条件</li>
+        <li class="steps__line" aria-hidden="true"></li>
+        <li class="step is-next">3　最初の記事（あとでも可）</li>
+      </ol>
+      <p class="signup-intro__meta">所要 約5分／残り 2ステップ</p>
+    </div>
+
+    <div class="signup-cols container-wide">
+
+      <!-- ======= main column ======= -->
+      <div class="signup-col-main">
+        <section class="signup-card reveal">
+
+          <!-- できる加工・工程 -->
+          <div class="sg-group">
+            <div class="sg-group__head">
+              <h2 class="sg-group__ttl">できる加工・工程</h2>
+              <p class="sg-group__note">当てはまるものをすべて</p>
+            </div>
+            <div class="ckchips" id="chips-process">
+              <button type="button" class="ckchip is-on" aria-pressed="true" data-label="板金・レーザー">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                レーザー切断
+              </button>
+              <button type="button" class="ckchip is-on" aria-pressed="true" data-label="板金・レーザー">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                曲げ・ベンダー
+              </button>
+              <button type="button" class="ckchip is-on" aria-pressed="true" data-label="溶接">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                TIG溶接
+              </button>
+              <button type="button" class="ckchip is-on" aria-pressed="true" data-label="組立">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                組立
+              </button>
+              <button type="button" class="ckchip" aria-pressed="false" data-label="切削">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                切削・旋盤
+              </button>
+              <button type="button" class="ckchip" aria-pressed="false" data-label="プレス">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                プレス
+              </button>
+              <button type="button" class="ckchip" aria-pressed="false" data-label="表面処理">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                表面処理
+              </button>
+              <button type="button" class="ckchip" aria-pressed="false" data-label="熱処理">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                熱処理
+              </button>
+              <button type="button" class="ckchip" aria-pressed="false" data-label="検査">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                検査・測定
+              </button>
+            </div>
+          </div>
+
+          <hr class="sg-rule">
+
+          <!-- 扱える素材 -->
+          <div class="sg-group">
+            <div class="sg-group__head">
+              <h2 class="sg-group__ttl">扱える素材</h2>
+              <p class="sg-group__note">当てはまるものをすべて</p>
+            </div>
+            <div class="ckchips" id="chips-material">
+              <button type="button" class="ckchip is-on" aria-pressed="true" data-label="ステンレス">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                ステンレス
+              </button>
+              <button type="button" class="ckchip is-on" aria-pressed="true" data-label="鉄・鋼">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                鉄・鋼
+              </button>
+              <button type="button" class="ckchip is-on" aria-pressed="true" data-label="アルミ">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                アルミ
+              </button>
+              <button type="button" class="ckchip" aria-pressed="false" data-label="銅・真鍮">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                銅・真鍮
+              </button>
+              <button type="button" class="ckchip" aria-pressed="false" data-label="樹脂">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                樹脂
+              </button>
+              <button type="button" class="ckchip" aria-pressed="false" data-label="繊維・布">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                繊維・布
+              </button>
+              <button type="button" class="ckchip" aria-pressed="false" data-label="木材">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                木材
+              </button>
+              <button type="button" class="ckchip" aria-pressed="false" data-label="食品材料">
+                <svg class="ckchip__box" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                食品材料
+              </button>
+            </div>
+          </div>
+
+          <hr class="sg-rule">
+
+          <!-- 2カラムフォーム -->
+          <div class="sg-fields">
+            <div class="fld">
+              <div class="fld__label">
+                <span>対応ロット</span>
+                <span class="tag tag--blue">探す人が最も重視</span>
+              </div>
+              <div class="fld__lot">
+                <input class="fld__input" id="lot-min" type="text" value="1" aria-label="対応ロット（最小）">
+                <span class="fld__lot-sep">〜</span>
+                <input class="fld__input" id="lot-max" type="text" value="2,000" aria-label="対応ロット（最大）">
+                <span class="fld__lot-unit">個</span>
+              </div>
+            </div>
+
+            <div class="fld">
+              <div class="fld__label"><span>加工精度（標準）</span></div>
+              <div class="fld__select">
+                <select id="fld-precision" aria-label="加工精度（標準）">
+                  <option>±0.01mm</option>
+                  <option selected>±0.05mm</option>
+                  <option>±0.1mm</option>
+                  <option>±0.5mm</option>
+                </select>
+                <svg class="fld__caret" viewBox="0 0 8 6" aria-hidden="true"><path d="M1 1.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>
+              </div>
+            </div>
+
+            <div class="fld">
+              <div class="fld__label"><span>対応サイズ（最大）</span></div>
+              <input class="fld__input" type="text" value="1,500×3,000mm／板厚 0.5〜6.0mm" aria-label="対応サイズ（最大）">
+            </div>
+
+            <div class="fld">
+              <div class="fld__label"><span>標準納期</span></div>
+              <div class="fld__deadline">
+                <input class="fld__bare" id="fld-deadline" type="text" value="5〜10日" aria-label="標準納期">
+                <label class="cbx-label">
+                  <input type="checkbox" id="cbx-express" checked>
+                  <svg class="cbx" viewBox="0 0 15 15" aria-hidden="true"><rect x="1.75" y="1.75" width="11.5" height="11.5" fill="none" stroke="currentColor" stroke-width="1"/><path class="tick" d="M4.2 7.6l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                  特急応相談
+                </label>
+              </div>
+            </div>
+
+            <div class="fld">
+              <div class="fld__label"><span>品質・認証</span></div>
+              <div class="fld__select">
+                <select aria-label="品質・認証">
+                  <option selected>ISO9001／ISO14001</option>
+                  <option>ISO9001</option>
+                  <option>ISO14001</option>
+                  <option>認証なし</option>
+                </select>
+                <svg class="fld__caret" viewBox="0 0 8 6" aria-hidden="true"><path d="M1 1.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>
+              </div>
+            </div>
+
+            <div class="fld">
+              <div class="fld__label"><span>対応エリア</span></div>
+              <div class="fld__select">
+                <select aria-label="対応エリア">
+                  <option selected>全国発送</option>
+                  <option>関東エリア</option>
+                  <option>関西エリア</option>
+                  <option>近隣エリアのみ</option>
+                </select>
+                <svg class="fld__caret" viewBox="0 0 8 6" aria-hidden="true"><path d="M1 1.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>
+              </div>
+            </div>
+
+            <div class="fld">
+              <div class="fld__label">
+                <span>価格帯の目安</span>
+                <span class="tag tag--text">非公開にもできます</span>
+              </div>
+              <div class="fld__select">
+                <select id="fld-price" aria-label="価格帯の目安">
+                  <option>試作 1万円〜</option>
+                  <option selected>試作 3万円〜</option>
+                  <option>試作 5万円〜</option>
+                  <option>非公開</option>
+                </select>
+                <svg class="fld__caret" viewBox="0 0 8 6" aria-hidden="true"><path d="M1 1.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>
+              </div>
+            </div>
+
+            <div class="fld">
+              <div class="fld__label"><span>問い合わせ対応時間</span></div>
+              <input class="fld__input" type="text" value="平日 9:00 - 17:30" aria-label="問い合わせ対応時間">
+            </div>
+          </div>
+
+          <hr class="sg-rule">
+
+          <!-- 対応が難しい条件 -->
+          <div class="sg-group">
+            <div class="sg-group__head -left">
+              <h2 class="sg-group__ttl">対応が難しい条件</h2>
+              <p class="sg-group__note">先に書いておくと、合わない問い合わせが減ります</p>
+            </div>
+            <textarea class="sg-textarea" rows="3" placeholder="板厚6.0mm超／鋳物・樹脂／10,000個以上の量産／めっき・塗装（協力会社へ手配）" aria-label="対応が難しい条件"></textarea>
+          </div>
+
+        </section>
+
+        <!-- ======= bottom actions ======= -->
+        <div class="signup-actions reveal">
+          <div class="signup-actions__left">
+            <a class="btn btn--box-lg btn--outline-thin" href="#">戻る</a>
+            <p class="signup-actions__note">入力内容は自動保存されます</p>
+          </div>
+          <div class="signup-actions__right">
+            <a class="btn btn--box-lg btn--outline-thin" href="admin-article.html">あとで入力して先に進む</a>
+            <a class="btn btn--box-lg btn--dark" href="admin-article.html">次へ（最初の記事へ）</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======= sidebar ======= -->
+      <aside class="signup-side" data-stagger="0.08">
+
+        <section class="side-card reveal">
+          <div class="side-card__head">
+            <h2 class="side-card__ttl">検索結果での見え方</h2>
+            <span class="tag tag--blue">入力にあわせて変化</span>
+          </div>
+          <div class="pv">
+            <div class="pv__company">
+              <div class="ph-thumb pv__thumb" aria-hidden="true"></div>
+              <div class="pv__company-txt">
+                <div class="pv__name-row">
+                  <p class="pv__name">株式会社○○製作所</p>
+                  <span class="tag tag--text pv__iso">ISO9001</span>
+                </div>
+                <p class="pv__sub">大阪府八尾市・30〜99名</p>
+              </div>
+            </div>
+            <div class="pv__chips" id="pv-chips">
+              <span class="pv-chip"><span class="pv-chip__ck">✓</span>ステンレス</span>
+              <span class="pv-chip"><span class="pv-chip__ck">✓</span>板金・レーザー</span>
+              <span class="pv-chip"><span class="pv-chip__ck">✓</span>1個から</span>
+            </div>
+            <dl class="pv__specs">
+              <div class="pv__spec"><dt>ロット</dt><dd id="pv-lot">1〜2,000個</dd></div>
+              <div class="pv__spec"><dt>精度</dt><dd id="pv-precision">±0.05mm</dd></div>
+              <div class="pv__spec"><dt>納期</dt><dd id="pv-deadline">5〜10日</dd></div>
+              <div class="pv__spec"><dt>価格</dt><dd id="pv-price">試作3万円〜</dd></div>
+            </dl>
+          </div>
+          <p class="side-card__desc">この条件だと、直近1か月で<strong>312回</strong>検索されている「SUS304×小ロット×短納期」に表示されます。</p>
+        </section>
+
+        <section class="side-card reveal">
+          <h2 class="side-card__ttl">入力の充足度</h2>
+          <div class="meter">
+            <div class="meter__bar"><div class="meter__fill" id="meter-fill" style="width:64%"></div></div>
+            <p class="meter__pct" id="meter-pct">64%</p>
+          </div>
+          <ul class="side-check">
+            <li class="side-check__item is-done" id="check-required">✓ 加工・材質・ロット（必須）</li>
+            <li class="side-check__item is-done">✓ 精度・サイズ・納期</li>
+            <li class="side-check__item">− 実績・事例（推奨5件）＜ 未入力</li>
+            <li class="side-check__item">− 保有設備の型式 ＜ 未入力</li>
+          </ul>
+        </section>
+
+        <section class="side-card -bg reveal">
+          <h2 class="side-card__ttl">この登録でかかる費用</h2>
+          <div class="side-cost">
+            <p class="side-cost__price">¥0</p>
+            <p class="side-cost__for">／企業登録・記事投稿・検索掲載・相談の受信</p>
+          </div>
+          <p class="side-card__desc">優先表示・レコメンド配信・運用代行は有料オプション（Phase2）。登録時点で費用は発生しません。</p>
+        </section>
+
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <img class="site-footer__logo" src="assets/img/monoen-symbol-metal.png" alt="モノエン">
+      <nav class="site-footer__nav">
+        <a href="#">企業の方へ</a>
+        <a href="#">運営ポリシー</a>
+        <a href="#">記事ガイドライン</a>
+        <a href="#">お問い合わせ</a>
+      </nav>
+      <p class="site-footer__brand">MONOTE</p>
+      <p class="site-footer__copy">運営：株式会社モノエン</p>
+    </div>
+  </footer>
+  <script src="js/site.js"></script>
+  <script src="js/signup.js"></script>
+</body>
+</html>
