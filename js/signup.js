@@ -87,10 +87,40 @@
       : '− 加工・材質・ロット（必須）＜ 未入力';
   }
 
+  /* ---- caret はテキスト直後に置く（Figma準拠） / 納期inputは内容幅 ---- */
+  var measurer = document.createElement('span');
+  measurer.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;white-space:pre;' +
+    'font:15px/1.3 "IBM Plex Sans JP","Hiragino Kaku Gothic ProN",sans-serif;';
+  document.body.appendChild(measurer);
+
+  function textW(t) {
+    measurer.textContent = t;
+    return measurer.getBoundingClientRect().width;
+  }
+
+  function layoutInline() {
+    Array.prototype.forEach.call(document.querySelectorAll('.fld__select'), function (wrap) {
+      var sel = wrap.querySelector('select');
+      var caret = wrap.querySelector('.fld__caret');
+      if (!sel || !caret) return;
+      var opt = sel.options[sel.selectedIndex];
+      var w = 16 + textW(opt ? opt.text : '') + 8;
+      if (w < wrap.clientWidth - 24) {
+        caret.style.right = 'auto';
+        caret.style.left = w + 'px';
+      } else {
+        caret.style.left = 'auto';
+        caret.style.right = '16px';
+      }
+    });
+    deadline.style.width = Math.max(20, Math.ceil(textW(deadline.value)) + 4) + 'px';
+  }
+
   function update() {
     renderPreviewChips();
     renderPreviewValues();
     renderMeter();
+    layoutInline();
   }
 
   /* ---- chip toggle ---- */
@@ -111,6 +141,13 @@
   [precision, price].forEach(function (el) {
     el.addEventListener('change', update);
   });
+  Array.prototype.forEach.call(document.querySelectorAll('.fld__select select'), function (el) {
+    el.addEventListener('change', layoutInline);
+  });
 
   update();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(layoutInline);
+  }
+  window.addEventListener('load', layoutInline);
 })();

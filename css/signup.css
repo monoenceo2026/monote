@@ -214,7 +214,7 @@
 .fld__select select,
 .fld__deadline {
   width: 100%;
-  padding: 15px 16px;
+  padding: 16px;
   border: 0.5px solid var(--line);
   border-radius: 4px;
   background: var(--white);
@@ -262,6 +262,7 @@
   height: 6px;
   color: var(--text);
   pointer-events: none;
+  transition: left 0.15s ease;
 }
 .fld__deadline {
   display: flex;
@@ -295,7 +296,7 @@
 /* ---------- textarea ---------- */
 .sg-textarea {
   width: 100%;
-  min-height: 106px;
+  min-height: 92px;
   padding: 16px;
   border: 0.5px solid var(--line);
   border-radius: 4px;
@@ -370,7 +371,7 @@
   font-size: 20px;
   font-weight: 500;
   line-height: 1.6;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.08em;
   color: var(--ink);
 }
 .side-card__desc {
@@ -474,7 +475,6 @@
 .pv__spec dd { margin: 0; color: var(--sub); }
 
 /* meter */
-.side-card .side-card__ttl { letter-spacing: -0.04em; }
 .meter {
   display: flex;
   align-items: center;

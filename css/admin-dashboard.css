@@ -38,6 +38,7 @@ body.page-admin-dashboard { background: var(--white); }
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 5px; /* keeps the space before the inbox count (flex trims text whitespace) */
   height: 100%;
   font-size: 14px;
   letter-spacing: -0.02em;
