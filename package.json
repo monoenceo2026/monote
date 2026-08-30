@@ -1,0 +1,31 @@
+{
+  "name": "monote",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "seed": "node --experimental-strip-types lib/seed-cli.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/monoenceo2026/monote.git"
+  },
+  "bugs": {
+    "url": "https://github.com/monoenceo2026/monote/issues"
+  },
+  "homepage": "https://github.com/monoenceo2026/monote#readme",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "next": "^16.3.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.4.0",
+    "@types/react": "^19.2.18",
+    "typescript": "^7.0.2"
+  },
+  "private": true
+}
