@@ -87,7 +87,15 @@ export function searchCompanies(f: SearchFilters): Array<Company & { match_count
   const matchExpr = f.conditionIds?.length
     ? `(SELECT COUNT(*) FROM company_conditions m WHERE m.company_id = t.id AND m.condition_id IN (${f.conditionIds.map(() => "?").join(",")}))`
     : "0";
-  const order = f.sort === "updated" ? "t.updated_at DESC" : "match_count DESC, t.verified DESC, t.updated_at DESC";
+  /* richness: profile completeness + photos + published articles + response speed —
+     verified, well-maintained profiles rank above thin ones at equal match */
+  const richness = `(t.completeness
+    + (EXISTS (SELECT 1 FROM company_photos p WHERE p.company_id = t.id)) * 40
+    + (SELECT COUNT(*) FROM articles a WHERE a.company_id = t.id AND a.status='published') * 6
+    + (t.response_days IS NOT NULL) * (5 - COALESCE(t.response_days, 5)) * 8)`;
+  const order = f.sort === "updated"
+    ? "t.updated_at DESC"
+    : `match_count DESC, t.verified DESC, ${richness} DESC, t.updated_at DESC`;
   const sql = `SELECT t.*, ${matchExpr} AS match_count FROM companies t WHERE ${where}${cond.sql} ORDER BY ${order}`;
   return db().prepare(sql).all(...(f.conditionIds ?? []), ...params, ...cond.params) as Array<Company & { match_count: number }>;
 }
