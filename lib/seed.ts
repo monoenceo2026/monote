@@ -86,8 +86,8 @@ export function runSeed(db: Database) {
   const insPhoto = db.prepare("INSERT INTO company_photos (company_id, path, sort) VALUES (?, ?, ?)");
   const insWork = db.prepare("INSERT INTO works (company_id, title, spec) VALUES (?, ?, ?)");
   const insArticle = db.prepare(`INSERT INTO articles
-    (slug, company_id, title, excerpt, body, theme, status, reviewed, read_minutes, tag1, tag2, published_at, updated_at)
-    VALUES (@slug,@company_id,@title,@excerpt,@body,@theme,'published',@reviewed,@read_minutes,@tag1,@tag2,@published_at,@updated)`);
+    (slug, company_id, title, excerpt, body, theme, status, reviewed, read_minutes, tag1, tag2, thumb, published_at, updated_at)
+    VALUES (@slug,@company_id,@title,@excerpt,@body,@theme,'published',@reviewed,@read_minutes,@tag1,@tag2,@thumb,@published_at,@updated)`);
   const insAC = db.prepare("INSERT OR IGNORE INTO article_conditions (article_id, condition_id) VALUES (?, ?)");
   const insEvent = db.prepare("INSERT INTO events (type, company_id, article_id, term, created_at) VALUES (?, ?, ?, ?, ?)");
   const insUser = db.prepare("INSERT INTO users (email, name, role, company_id) VALUES (?, ?, ?, ?)");
@@ -298,6 +298,7 @@ export function runSeed(db: Database) {
       },
       {
         slug: "anodize-color-uneven",
+        thumb: "/assets/img/article-anodize.png",
         company_id: giken,
         title: "削る・切るアルマイトの色ムラを抑えるために、前処理で変えた3つのこと",
         excerpt: "アルマイトの色ムラは、処理槽よりも前処理で決まることが多い、というのが現場の実感です。",
@@ -311,6 +312,7 @@ export function runSeed(db: Database) {
       },
       {
         slug: "sheetmetal-quick-quote",
+        thumb: "/assets/img/article-sheetmetal.png",
         company_id: marumaru,
         title: "1個から受ける板金試作、見積が早い会社は何を決めているか",
         excerpt: "見積の速さは、社内の標準化で決まります。当社が見積前に決めている項目を公開します。",
@@ -324,6 +326,7 @@ export function runSeed(db: Database) {
       },
       {
         slug: "inspection-line",
+        thumb: "/assets/img/article-inspection.png",
         company_id: seiki,
         title: "全数検査と抜取検査、医療部品でどう線を引いているか",
         excerpt: "検査コストと品質保証のバランスを、当社の実例で説明します。",
@@ -337,6 +340,7 @@ export function runSeed(db: Database) {
       },
       {
         slug: "dye-lot-minimum",
+        thumb: "/assets/img/article-dye.png",
         company_id: sensen,
         title: "染色ロットの下限を下げるために設備をどう組み替えたか",
         excerpt: "小ロット需要に応えるための設備の組み替えと、その限界について。",
@@ -379,7 +383,7 @@ export function runSeed(db: Database) {
       const id = insArticle.run({
         slug: a.slug, company_id: a.company_id, title: a.title, excerpt: a.excerpt,
         body: a.body, theme: a.theme, reviewed: a.reviewed, read_minutes: a.read_minutes,
-        tag1: a.tag1, tag2: a.tag2, published_at: a.published_at, updated: a.updated,
+        tag1: a.tag1, tag2: a.tag2, thumb: a.thumb ?? "", published_at: a.published_at, updated: a.updated,
       }).lastInsertRowid as number;
       articleIds.push(id);
       for (const c of a.conditions) {
@@ -415,6 +419,7 @@ export function runSeed(db: Database) {
         read_minutes: 3 + Math.floor(rand() * 5),
         tag1: ["板金", "切削", "表面処理", "溶接", "検査", "繊維"][Math.floor(rand() * 6)],
         tag2: ["小ロット", "量産", "試作", "ISO9001", "短納期"][Math.floor(rand() * 5)],
+        thumb: "",
         published_at: iso(daysAgo),
         updated: iso(Math.max(0, daysAgo - Math.floor(rand() * 10))),
       }).lastInsertRowid as number;

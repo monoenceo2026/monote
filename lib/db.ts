@@ -37,6 +37,11 @@ export function db(): Database.Database {
   _db.pragma("journal_mode = WAL");
   _db.pragma("foreign_keys = ON");
   _db.exec(SCHEMA);
+  /* lightweight migrations for DBs created before a column existed */
+  const articleCols = _db.prepare("PRAGMA table_info(articles)").all() as Array<{ name: string }>;
+  if (!articleCols.some((c) => c.name === "thumb")) {
+    _db.exec("ALTER TABLE articles ADD COLUMN thumb TEXT NOT NULL DEFAULT ''");
+  }
   const seeded = _db.prepare("SELECT COUNT(*) AS n FROM companies").get() as { n: number };
   if (seeded.n === 0) runSeed(_db);
   return _db;

@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS articles (
   read_minutes INTEGER NOT NULL DEFAULT 5,
   tag1 TEXT NOT NULL DEFAULT '',
   tag2 TEXT NOT NULL DEFAULT '',
+  thumb TEXT NOT NULL DEFAULT '',
   published_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))

@@ -25,7 +25,7 @@ export type Company = {
 export type Article = {
   id: number; slug: string; company_id: number; title: string; excerpt: string;
   body: string; theme: string; status: string; reviewed: number; read_minutes: number;
-  tag1: string; tag2: string; published_at: string | null; created_at: string; updated_at: string;
+  tag1: string; tag2: string; thumb: string; published_at: string | null; created_at: string; updated_at: string;
   company_name?: string; company_slug?: string;
 };
 
@@ -151,6 +151,20 @@ export function articleBySlug(slug: string): Article | null {
   ).get(slug) as Article | undefined;
   return row ?? null;
 }
+/** TOP の「読んで探す」: サムネイル付き記事を優先し、足りなければ最新記事で埋める */
+export function featuredArticles(limit: number): Article[] {
+  const withThumb = db().prepare(
+    `SELECT t.*, c.name AS company_name, c.slug AS company_slug FROM articles t JOIN companies c ON c.id = t.company_id
+     WHERE t.status='published' AND t.thumb != '' ORDER BY t.published_at DESC LIMIT ?`
+  ).all(limit) as Article[];
+  if (withThumb.length >= limit) return withThumb;
+  const rest = db().prepare(
+    `SELECT t.*, c.name AS company_name, c.slug AS company_slug FROM articles t JOIN companies c ON c.id = t.company_id
+     WHERE t.status='published' AND t.thumb = '' ORDER BY t.published_at DESC LIMIT ?`
+  ).all(limit - withThumb.length) as Article[];
+  return [...withThumb, ...rest];
+}
+
 export function latestArticles(limit: number): Article[] {
   return db().prepare(
     `SELECT t.*, c.name AS company_name, c.slug AS company_slug FROM articles t JOIN companies c ON c.id = t.company_id
