@@ -33,9 +33,7 @@
   right: -23px;
   top: 195px;
   width: 274px;
-  height: 282px;
-  object-fit: cover;
-  object-position: top;
+  height: 341px; /* natural aspect — the lower lobe slips behind the logo bar */
   transform: translateY(24px) rotate(6deg);
   z-index: 2;
 }
@@ -144,9 +142,10 @@
 .hero__tags .chip { transition: background-color 0.25s ease, color 0.25s ease; }
 .hero__tags .chip:hover { background: var(--ink); color: var(--white); }
 
-/* logo strip (marquee) */
+/* logo strip (marquee) — stacked above the metallic symbols */
 .hero__logos {
   position: relative;
+  z-index: 3;
   height: 98px;
   background: var(--white);
   border-top: 1px solid var(--line);
@@ -554,7 +553,7 @@ main { padding-bottom: 80px; }
   .hero__tags-list { flex-wrap: wrap; justify-content: center; }
   .hero__tags .chip:nth-child(n+5) { display: none; }
   .hero-metal--tl { left: -40px; top: -20px; width: 150px; height: 187px; }
-  .hero-metal--r { right: -30px; top: auto; bottom: 40px; width: 130px; height: 134px; }
+  .hero-metal--r { right: -30px; top: auto; bottom: -30px; width: 130px; height: 161px; }
   .hero__logos { height: 72px; }
   .hero__logos-track { gap: 40px; padding-left: 40px; }
   .hero__logos-track img { width: 110px; height: 40px; }
