@@ -436,7 +436,7 @@ export function runSeed(db: Database) {
       ["ステンレス × 1個から", 198, 44, 7, 1],
       ["精密板金 × 医療機器", 163, 21, 4, 0],
       ["板金 × 特急 × 関西", 96, 9, 2, 0],
-      ["", 274, 198, 0, 0],
+      ["", 274, 107, 0, 0],
     ];
     const addEvents = (type: string, term: string, n: number, spreadDays: number, offsetDays = 0) => {
       for (let i = 0; i < n; i++) {
@@ -449,6 +449,8 @@ export function runSeed(db: Database) {
       addEvents("save", term, saveN, 30);
       addEvents("inquiry", term, inqN, 30);
     }
+    /* direct (non-search) page views so 検索経由 share lands near 78% (321 clicks / 412 total) */
+    addEvents("view", "", 91, 30);
     /* previous month baselines: impressions 930 (+38%), views… clicks act as views */
     addEvents("impression", "", 930, 30, 31);
     addEvents("click", "", 340, 30, 31);

@@ -2,17 +2,12 @@
    MONOTE — W-08 企業管理ダッシュボード
    ============================================================ */
 
-body.page-admin-dashboard { background: var(--white); }
+.page-admin-dashboard { background: var(--white); }
 
-/* ---------- admin header ---------- */
-.admin-header { border-bottom: 1px solid var(--line); }
-.admin-header__inner {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding-inline: 40px;
-}
-.admin-badge {
+/* ---------- admin header (scoped overrides on the shared Header markup,
+   reproducing the static admin-dashboard.html header) ---------- */
+.page-admin-dashboard .site-header__inner--admin { gap: 0; }
+.page-admin-dashboard .admin-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -27,26 +22,28 @@ body.page-admin-dashboard { background: var(--white); }
   color: var(--text);
   white-space: nowrap;
 }
-.admin-nav {
+.page-admin-dashboard .admin-nav {
   display: flex;
   gap: 24px;
   align-self: stretch;
   align-items: center;
   margin-left: 40px;
+  padding-top: 0;
 }
-.admin-nav a {
+.page-admin-dashboard .admin-nav a {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 5px; /* keeps the space before the inbox count (flex trims text whitespace) */
   height: 100%;
+  padding-bottom: 0;
   font-size: 14px;
   letter-spacing: -0.02em;
   line-height: 1.2;
   color: var(--text);
   white-space: nowrap;
 }
-.admin-nav a::after {
+.page-admin-dashboard .admin-nav a::after {
   content: "";
   position: absolute;
   left: 0; right: 0; bottom: -1px;
@@ -56,22 +53,16 @@ body.page-admin-dashboard { background: var(--white); }
   transform-origin: left;
   transition: transform 0.35s var(--ease-out);
 }
-.admin-nav a:hover::after,
-.admin-nav a.is-active::after { transform: scaleX(1); }
-.admin-nav a.is-active { font-weight: 500; }
-.admin-header__actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.admin-header__company {
+.page-admin-dashboard .admin-nav a:hover::after,
+.page-admin-dashboard .admin-nav a.is-active::after { transform: scaleX(1); }
+.page-admin-dashboard .admin-nav a.is-active { font-weight: 500; }
+.page-admin-dashboard .admin-company-name {
   font-size: 13px;
   letter-spacing: -0.02em;
   color: var(--sub);
   white-space: nowrap;
 }
-.admin-header__write { padding: 8px 24px; line-height: 1.6; font-weight: 400; }
+.page-admin-dashboard .site-header__actions .btn--dark { line-height: 1.6; font-weight: 400; }
 
 /* ---------- page head ---------- */
 .admin-main { padding-top: 40px; padding-bottom: 80px; }
@@ -152,6 +143,8 @@ body.page-admin-dashboard { background: var(--white); }
 }
 .dash-select__menu li:hover { background: var(--bg); }
 .dash-select__menu li[aria-selected="true"] { font-weight: 500; color: var(--ink); background: var(--skyblue); }
+.dash-select__menu li.is-disabled { opacity: 0.45; cursor: not-allowed; }
+.dash-select__menu li.is-disabled:hover { background: transparent; }
 
 /* ---------- KPI cards ---------- */
 .kpi-row {
@@ -513,7 +506,7 @@ body.page-admin-dashboard { background: var(--white); }
    responsive
    ============================================================ */
 @media (max-width: 1180px) {
-  .admin-header__company { display: none; }
+  .page-admin-dashboard .admin-company-name { display: none; }
 }
 @media (max-width: 1024px) {
   .dash-grid { grid-template-columns: 1fr; }
@@ -522,8 +515,8 @@ body.page-admin-dashboard { background: var(--white); }
   .kpi-card__label, .kpi-card__note { white-space: normal; }
 }
 @media (max-width: 900px) {
-  .admin-nav { display: none; }
-  .admin-header__inner { padding-inline: 20px; }
+  .page-admin-dashboard .admin-nav { display: none; }
+  .page-admin-dashboard .site-header__inner { padding-inline: 20px; }
 }
 @media (max-width: 768px) {
   .admin-main { padding-top: 32px; padding-bottom: 56px; }
@@ -552,8 +545,8 @@ body.page-admin-dashboard { background: var(--white); }
 @media (max-width: 480px) {
   .kpi-card { flex-basis: 100%; }
   .dash-head__actions { flex-wrap: wrap; gap: 8px; }
-  .admin-badge { margin-left: 12px; }
-  .admin-header__write { padding: 8px 16px; }
+  .page-admin-dashboard .admin-badge { margin-left: 12px; }
+  .page-admin-dashboard .site-header__actions .btn--dark { padding: 8px 16px; }
   .inbox-item__actions { gap: 8px; }
   .inbox-item__actions .btn { padding-inline: 16px; }
 }
