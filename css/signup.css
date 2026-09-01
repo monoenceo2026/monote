@@ -537,6 +537,50 @@
   color: var(--text);
 }
 
+/* ---------- done screen (?done=1) ---------- */
+.signup-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 96px;
+  margin-bottom: 120px;
+  text-align: center;
+}
+.signup-done__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 0.5px solid var(--line);
+  background: var(--white);
+  color: var(--blue);
+}
+.signup-done__mark svg { width: 24px; height: 24px; }
+.signup-done__ttl {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.signup-done__desc {
+  font-size: 15px;
+  line-height: 1.8;
+  letter-spacing: -0.02em;
+  color: var(--sub);
+}
+.signup-done__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
 /* ---------- responsive ---------- */
 @media (max-width: 1160px) {
   .signup-cols { flex-direction: column; }
@@ -567,4 +611,7 @@
   .signup-actions__right .btn { width: 100%; }
   .side-card { padding: 16px; }
   .pv__name { white-space: normal; }
+  .signup-done { margin-top: 64px; margin-bottom: 80px; }
+  .signup-done__actions { flex-direction: column; align-items: stretch; width: 100%; gap: 12px; }
+  .signup-done__actions .btn { width: 100%; }
 }

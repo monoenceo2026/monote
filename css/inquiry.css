@@ -464,6 +464,94 @@
 .side-card__send { font-weight: 500; }
 .side-card__send[disabled] { opacity: 0.45; }
 
+/* ---------- validation (dynamic) ---------- */
+.field.has-error .input,
+.field.has-error .textarea,
+.field.has-error .selectbox { border-color: var(--red); }
+.field__error {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--red);
+}
+.side-card__error {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--red);
+}
+
+/* ---------- 送信完了 (?sent=<id>) ---------- */
+.iq-done {
+  margin-top: 40px;
+  padding: 72px 32px 80px;
+  background: var(--white);
+  border: 0.5px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+.iq-done__mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.iq-done__mark svg { width: 22px; height: 22px; }
+.iq-done__ttl {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: -0.06em;
+  color: var(--ink);
+}
+.iq-done__desc {
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--sub);
+}
+.iq-done__actions {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+}
+.iq-done__demo {
+  margin-top: 24px;
+  max-width: 560px;
+  padding: 16px 20px;
+  border: 0.5px dashed var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text);
+  text-align: left;
+}
+.iq-done__demo-ttl {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.iq-done__demo a {
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+@media (max-width: 768px) {
+  .iq-done { margin-top: 32px; padding: 48px 20px 56px; }
+  .iq-done__ttl { font-size: 22px; }
+  .iq-done__br { display: none; }
+  .iq-done__desc { font-size: 13px; }
+}
+
 /* ---------- responsive ---------- */
 @media (max-width: 1120px) {
   .inquiry__layout { grid-template-columns: minmax(0, 1fr); }

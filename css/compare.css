@@ -403,6 +403,18 @@
   color: var(--sub);
 }
 
+.saved-card h3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+/* ---------- dynamic panels (保存した企業 / 相談の履歴 tabs) ---------- */
+.cmp-panel { margin-top: 24px; }
+.cmp-panel .saved__grid { margin-top: 0; }
+.cmp-empty a { text-decoration: underline; text-underline-offset: 3px; }
+
 /* ============================================================
    responsive
    ============================================================ */

@@ -1,0 +1,88 @@
+/* ============================================================
+   MONOTE — 記事一覧 (/articles)
+   TOP の「読んで探す」article-card グリッドを一覧ページとして流用
+   ============================================================ */
+
+.articles-main { padding-bottom: 80px; }
+
+.articles-list { margin-top: 48px; }
+.articles-list__ttl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.articles-grid {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+/* article-card（top.css と同一の見た目） */
+.article-card {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.4s var(--ease-out);
+}
+.article-card:hover { transform: translateY(-4px); }
+.article-card__thumb {
+  height: 120px;
+  border-radius: 8px 8px 0 0;
+}
+.article-card__body {
+  background: var(--white);
+  border: 0.5px solid var(--line);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.article-card__tags { display: flex; gap: 8px; }
+.article-card__body h3 {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: -0.05em;
+  color: var(--text);
+}
+.article-card__body p {
+  font-size: 12px;
+  letter-spacing: -0.05em;
+  color: var(--sub);
+}
+
+/* ============================================================
+   responsive
+   ============================================================ */
+@media (max-width: 1080px) {
+  .articles-grid { grid-template-columns: repeat(2, 1fr); }
+  .site-header__inner { gap: 16px; }
+  .site-header__search { width: auto; flex: 1 1 auto; min-width: 0; margin-left: 0; }
+  .site-header__actions .btn--pill { display: none; }
+}
+
+@media (max-width: 768px) {
+  .site-header__inner { padding-inline: 16px; gap: 12px; }
+  .site-header__actions { display: none; }
+
+  .articles-list { margin-top: 32px; }
+  .articles-list__ttl .sec-ttl h2 { font-size: 24px; }
+  .articles-list__ttl .btn { padding: 8px 16px; font-size: 13px; }
+  .articles-grid { grid-template-columns: 1fr; gap: 16px; }
+  .article-card {
+    flex-direction: row;
+    gap: 16px;
+    border: 0.5px solid var(--line);
+    border-radius: 8px;
+    padding: 16px;
+    background: var(--white);
+  }
+  .article-card__thumb { width: 120px; height: 80px; flex-shrink: 0; border-radius: 4px; }
+  .article-card__thumb span { font-size: 10px; }
+  .article-card__body { border: none; padding: 0; justify-content: center; }
+  .article-card__tags { display: none; }
+}

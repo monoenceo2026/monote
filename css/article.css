@@ -211,6 +211,20 @@
 .dummy-text .w-80 { width: 80.3%; }
 .dummy-text .w-68 { width: 67.8%; }
 
+/* 本文（実テキスト） */
+.article-sec__body {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.article-sec__body p {
+  font-size: 15px;
+  line-height: 2;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
 /* ---------- この記事の技術条件 ---------- */
 .tech-cond {
   margin-top: 40px;
