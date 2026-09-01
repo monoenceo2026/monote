@@ -19,7 +19,18 @@ export default function HeroFx() {
     const blobSvg = document.querySelector<SVGSVGElement>(".pick__blob");
     const blobPath = blobSvg?.querySelector<SVGPathElement>(".pick__blob-path") ?? null;
 
-    requestAnimationFrame(() => hero?.classList.add("is-loaded"));
+    /* hero reveal: wait for the entrance movie when it is active */
+    const introEl = document.getElementById("site-intro");
+    const introActive =
+      introEl && !introEl.hidden &&
+      !introEl.classList.contains("is-done") &&
+      !document.documentElement.hasAttribute("data-intro-off");
+    const reveal = () => hero?.classList.add("is-loaded");
+    if (introActive) {
+      window.addEventListener("monote:intro-done", reveal, { once: true });
+    } else {
+      requestAnimationFrame(reveal);
+    }
 
     /* mobile placeholder (per SP design) */
     const heroInput = document.querySelector<HTMLInputElement>(".hero__search-input");
@@ -159,6 +170,7 @@ export default function HeroFx() {
 
     return () => {
       cleanupMotion();
+      window.removeEventListener("monote:intro-done", reveal);
       menuBtn?.removeEventListener("click", onMenu);
       carousel?.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointermove", onMovePtr);

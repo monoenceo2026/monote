@@ -2,6 +2,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HeroFx from "@/components/HeroFx";
+import Intro from "@/components/Intro";
 import { featuredArticles, siteStats } from "@/lib/repo";
 import "@/css/top.css";
 
@@ -30,6 +31,14 @@ export default function TopPage() {
 
   return (
     <>
+      {/* runs while parsing, before first paint: repeat visitors skip the intro without a flash */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html:
+            "try{if(sessionStorage.getItem('monote:intro')==='1'||matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.setAttribute('data-intro-off','1')}}catch(e){}",
+        }}
+      />
+      <Intro />
       <Header variant="top" active="search" />
 
       <div className="sp-menu" hidden>

@@ -2,6 +2,42 @@
    MONOTE — TOP (W-01, node 2432:559)
    ============================================================ */
 
+/* ---------- entrance animation ---------- */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 1;
+  transition: opacity 0.65s ease;
+}
+.intro.is-done { opacity: 0; pointer-events: none; }
+html[data-intro-off] .intro { display: none; }
+.intro__video {
+  height: min(82vh, 780px);
+  max-width: 86vw;
+  object-fit: contain;
+}
+.intro__skip {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--sub);
+  padding: 8px 16px;
+  transition: color 0.25s ease;
+}
+.intro__skip:hover { color: var(--ink); }
+@media (max-width: 768px) {
+  .intro__video { height: auto; width: min(78vw, 340px); }
+}
+
 /* ---------- hero ---------- */
 .hero {
   position: relative;
