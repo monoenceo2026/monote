@@ -33,9 +33,9 @@
   right: -23px;
   top: 195px;
   width: 274px;
-  height: 341px; /* natural aspect — the lower lobe slips behind the logo bar */
+  height: 341px; /* natural aspect — overlaps the logo bar in full */
   transform: translateY(24px) rotate(6deg);
-  z-index: 2;
+  z-index: 4;
 }
 .is-loaded .hero-metal { opacity: 1; transform: none; }
 
