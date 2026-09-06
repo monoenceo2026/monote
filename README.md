@@ -5,6 +5,9 @@
 
 Figmaデザイン: https://www.figma.com/design/gnam2ewPe2dZ2ivBazOgBq/MONOTE
 
+詳細ドキュメント: [`docs/`](./docs/README.md)
+（事業構想 / プロダクト仕様 / アーキテクチャ / データモデル / 検索設計 / 計測とKPI / デモデータ / 開発・運用）
+
 ## 技術構成
 
 - **Next.js 15**（App Router / TypeScript / Server Components + Server Actions）
