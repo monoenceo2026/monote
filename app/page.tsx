@@ -4,6 +4,8 @@ import Footer from "@/components/Footer";
 import HeroFx from "@/components/HeroFx";
 import Intro from "@/components/Intro";
 import { featuredArticles, siteStats } from "@/lib/repo";
+import { currentUser } from "@/lib/session";
+import { logoutAction } from "@/app/actions";
 import "@/css/top.css";
 
 export const dynamic = "force-dynamic";
@@ -25,9 +27,11 @@ const CAROUSEL = [
 
 const CHIPS = ["小ロット・1個から", "試作対応", "短納期", "ISO9001", "ステンレス", "高精度±0.01mm", "関西エリア"];
 
-export default function TopPage() {
+export default async function TopPage() {
   const articles = featuredArticles(4);
   const stats = siteStats();
+  /* SPではヘッダーの操作ボタンが隠れるため、ログイン導線はこのメニューにしか無い */
+  const user = await currentUser();
 
   return (
     <>
@@ -47,7 +51,22 @@ export default function TopPage() {
           <Link href="/articles">記事を読む</Link>
           <Link href="/features">特集</Link>
           <Link href="/about">MONOTEとは</Link>
-          <Link className="btn btn--pill btn--dark btn--block" href="/signup">無料で企業登録</Link>
+          {user ? (
+            <>
+              <Link href="/my/compare">マイページ（保存・比較）</Link>
+              {user.company_id ? <Link href="/admin">企業管理</Link> : null}
+              <form action={logoutAction}>
+                <button className="btn btn--pill btn--outline btn--block" type="submit">
+                  {user.name} 様（ログアウト）
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link href="/login">ログイン</Link>
+              <Link className="btn btn--pill btn--dark btn--block" href="/signup">無料で企業登録</Link>
+            </>
+          )}
         </nav>
       </div>
 

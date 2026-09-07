@@ -296,6 +296,9 @@ button { cursor: pointer; }
 }
 .site-footer__nav a { transition: opacity 0.25s ease; }
 .site-footer__nav a:hover { opacity: 0.7; }
+/* アカウント導線はSPのみ。PCはヘッダーに同じ導線があり、
+   フッターの高さもデザイン通り(356px)に保つ */
+.site-footer__account { display: none; }
 .site-footer__brand {
   margin-top: 61px;
   font-family: var(--font-brand);
@@ -346,7 +349,27 @@ button { cursor: pointer; }
 @media (max-width: 768px) {
   .site-footer { height: auto; padding-block: 56px 48px; }
   .site-footer__inner { padding-top: 0; }
-  .site-footer__nav { flex-wrap: wrap; justify-content: center; gap: 16px 24px; font-size: 13px; padding-inline: 24px; }
+  .site-footer__account {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px 20px;
+    margin-top: 32px;
+    padding: 0 24px 28px;
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: 13px;
+    letter-spacing: -0.02em;
+  }
+  .site-footer__account a,
+  .site-footer__account button {
+    color: var(--white);
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .site-footer__nav { flex-wrap: wrap; justify-content: center; gap: 16px 24px; font-size: 13px; padding-inline: 24px; margin-top: 28px; }
   .site-footer__brand { margin-top: 48px; }
 }
 
