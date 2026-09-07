@@ -10,7 +10,7 @@ import {
   similarCompanies,
   savedIds,
   compareList,
-  recordEvent,
+  recordView,
 } from "@/lib/repo";
 import { sessionKey } from "@/lib/session";
 import { inquiryCountOf } from "@/lib/extra/company";
@@ -46,12 +46,14 @@ export default async function CompanyPage({
   const c = companyBySlug(slug);
   if (!c) notFound();
 
-  /* ---------- events ---------- */
-  recordEvent("view", c.id);
+  /* ---------- events（保存・比較の再レンダーで水増ししないようセッション単位で重複排除） ---------- */
+  const trackKey = await sessionKey();
   const sp = await searchParams;
   if (sp.from === "search") {
     const term = typeof sp.term === "string" ? sp.term : typeof sp.q === "string" ? sp.q : "";
-    recordEvent("click", c.id, null, term);
+    recordView(trackKey, "click", { companyId: c.id, term });
+  } else {
+    recordView(trackKey, "view", { companyId: c.id });
   }
 
   /* ---------- data ---------- */

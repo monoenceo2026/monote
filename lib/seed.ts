@@ -298,7 +298,7 @@ export function runSeed(db: Database) {
       },
       {
         slug: "anodize-color-uneven",
-        thumb: "/assets/img/article-anodize.png",
+        thumb: "/assets/img/article-anodize.webp",
         company_id: giken,
         title: "削る・切るアルマイトの色ムラを抑えるために、前処理で変えた3つのこと",
         excerpt: "アルマイトの色ムラは、処理槽よりも前処理で決まることが多い、というのが現場の実感です。",
@@ -312,7 +312,7 @@ export function runSeed(db: Database) {
       },
       {
         slug: "sheetmetal-quick-quote",
-        thumb: "/assets/img/article-sheetmetal.png",
+        thumb: "/assets/img/article-sheetmetal.webp",
         company_id: marumaru,
         title: "1個から受ける板金試作、見積が早い会社は何を決めているか",
         excerpt: "見積の速さは、社内の標準化で決まります。当社が見積前に決めている項目を公開します。",
@@ -326,7 +326,7 @@ export function runSeed(db: Database) {
       },
       {
         slug: "inspection-line",
-        thumb: "/assets/img/article-inspection.png",
+        thumb: "/assets/img/article-inspection.webp",
         company_id: seiki,
         title: "全数検査と抜取検査、医療部品でどう線を引いているか",
         excerpt: "検査コストと品質保証のバランスを、当社の実例で説明します。",
@@ -340,7 +340,7 @@ export function runSeed(db: Database) {
       },
       {
         slug: "dye-lot-minimum",
-        thumb: "/assets/img/article-dye.png",
+        thumb: "/assets/img/article-dye.webp",
         company_id: sensen,
         title: "染色ロットの下限を下げるために設備をどう組み替えたか",
         excerpt: "小ロット需要に応えるための設備の組み替えと、その限界について。",
@@ -457,10 +457,10 @@ export function runSeed(db: Database) {
     /* direct (non-search) page views so 検索経由 share lands near 78% (321 clicks / 412 total) */
     addEvents("view", "", 91, 30);
     /* previous month baselines: impressions 930 (+38%), views… clicks act as views */
-    addEvents("impression", "", 930, 30, 31);
-    addEvents("click", "", 340, 30, 31);
-    addEvents("save", "", 24, 30, 31);
-    addEvents("inquiry", "", 4, 30, 31);
+    addEvents("impression", "", 930, 30, 30);
+    addEvents("click", "", 340, 30, 30);
+    addEvents("save", "", 24, 30, 30);
+    addEvents("inquiry", "", 4, 30, 30);
     /* article views for よく読まれている記事 */
     const artViews: Array<[number, number, number, number]> = [
       [articleIds[0], 168, 12, 3],

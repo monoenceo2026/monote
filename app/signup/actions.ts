@@ -9,8 +9,12 @@ import {
   updateCompanyProfile,
   type Company,
 } from "@/lib/repo";
-import { currentUser, loginAs } from "@/lib/session";
+import { currentUser, ensureSessionKey, loginAs } from "@/lib/session";
 import { conditionIdByKey, createCompanyUser } from "@/lib/extra/signup";
+
+const SIGNUP_MAX = 3;
+const SIGNUP_WINDOW_MS = 60 * 60 * 1000;
+const signupLog = new Map<string, number[]>();
 import { KANSAI_PREFS, KANTO_PREFS, MAT_CHIPS, PROC_CHIPS, meterPct } from "./defs";
 
 export type SignupPayload = {
@@ -45,6 +49,17 @@ export async function submitSignupAction(p: SignupPayload) {
 
   const user = await currentUser();
   const isNew = !(user?.role === "company" && user.company_id);
+
+  /* 企業登録の連投抑止（1セッションから短時間に大量の企業を作らせない） */
+  if (isNew) {
+    const sid = await ensureSessionKey();
+    const now = Date.now();
+    const hits = (signupLog.get(sid) ?? []).filter((t) => now - t < SIGNUP_WINDOW_MS);
+    if (hits.length >= SIGNUP_MAX) return { ok: false as const, error: "rate_limited" as const };
+    hits.push(now);
+    signupLog.set(sid, hits);
+    if (signupLog.size > 2000) signupLog.clear();
+  }
 
   /* ---- 数値・文字列のパース（チップ→conditions、数値→companiesフィールド の元） ---- */
   const lotMin = toInt(p.lotMin);

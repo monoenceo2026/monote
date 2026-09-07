@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { removeCompareAction, setCompareMemoAction } from "@/app/actions";
 
 type TabId = "compare" | "companies" | "articles" | "history";
@@ -25,6 +25,20 @@ export function CompareTabs({
   panelHistory: ReactNode;
 }) {
   const [tab, setTab] = useState<TabId>("compare");
+
+  /* ヘッダーの「保存した記事 N」など、URL から開くタブを指定できるようにする */
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tab") as TabId | null;
+    if (t && ["compare", "companies", "articles", "history"].includes(t)) {
+      setTab(t);
+      if (t === "articles") {
+        window.requestAnimationFrame(() => {
+          const target = document.querySelector("#savedArticles");
+          if (target) window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 104, behavior: "smooth" });
+        });
+      }
+    }
+  }, []);
 
   const select = (t: TabId) => {
     setTab(t);

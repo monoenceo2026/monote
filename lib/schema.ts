@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS inquiries (
   source TEXT NOT NULL DEFAULT 'search',
   status TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('draft','sent')),
   created_by INTEGER REFERENCES users(id),
+  session_id TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -151,9 +152,11 @@ CREATE TABLE IF NOT EXISTS events (
   company_id INTEGER,
   article_id INTEGER,
   term TEXT NOT NULL DEFAULT '',
+  session_id TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_events_company ON events(company_id, type, created_at);
+CREATE INDEX IF NOT EXISTS idx_events_dedupe ON events(session_id, type, company_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_articles_company ON articles(company_id, status);
 CREATE INDEX IF NOT EXISTS idx_saves_session ON saves(session_id);
 `;

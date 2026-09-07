@@ -68,7 +68,9 @@ export default async function InquiryNewPage({ searchParams }: { searchParams: P
   /* ?sent=<id> → 成功画面（同ルートで出し分け） */
   const sentParam = one(sp.sent);
   if (sentParam) {
-    const sent = inquiryWithRecipients(parseInt(sentParam, 10));
+    const viewer = await currentUser();
+    const viewerSession = await sessionKey();
+    const sent = inquiryWithRecipients(parseInt(sentParam, 10), { userId: viewer?.id ?? null, sessionId: viewerSession });
     if (sent && sent.status === "sent") {
       return (
         <>

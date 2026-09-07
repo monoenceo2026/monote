@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { introWillPlay } from "@/lib/intro-client";
 
 /**
  * TOP page motion (no.meets.ltd-inspired), attached to the server-rendered DOM:
@@ -19,12 +20,8 @@ export default function HeroFx() {
     const blobSvg = document.querySelector<SVGSVGElement>(".pick__blob");
     const blobPath = blobSvg?.querySelector<SVGPathElement>(".pick__blob-path") ?? null;
 
-    /* hero reveal: wait for the entrance movie when it is active */
-    const introEl = document.getElementById("site-intro");
-    const introActive =
-      introEl && !introEl.hidden &&
-      !introEl.classList.contains("is-done") &&
-      !document.documentElement.hasAttribute("data-intro-off");
+    /* hero reveal: wait for the entrance movie when it is active（Intro と同じ判定を使う） */
+    const introActive = introWillPlay();
     const reveal = () => hero?.classList.add("is-loaded");
     if (introActive) {
       window.addEventListener("monote:intro-done", reveal, { once: true });
@@ -121,6 +118,7 @@ export default function HeroFx() {
       window.addEventListener("scroll", onScroll, { passive: true });
 
       const tick = (now: number) => {
+        if (!running) return;
         const t = now * 0.001;
 
         /* organic wobble on the designed silhouette */
@@ -160,9 +158,39 @@ export default function HeroFx() {
 
         raf = requestAnimationFrame(tick);
       };
-      raf = requestAnimationFrame(tick);
-      cleanupMotion = () => {
+
+      /* 画面外・非表示タブでは回さない（常時 60fps で CPU を使い続けないため） */
+      const watched = [hero, pick].filter((el): el is HTMLElement => !!el);
+      const inView = new Set<Element>();
+      let running = false;
+      const start = () => {
+        if (running || document.hidden || inView.size === 0) return;
+        running = true;
+        raf = requestAnimationFrame(tick);
+      };
+      const stop = () => {
+        running = false;
         cancelAnimationFrame(raf);
+      };
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) inView.add(e.target);
+            else inView.delete(e.target);
+          }
+          if (inView.size === 0) stop();
+          else start();
+        },
+        { rootMargin: "120px" }
+      );
+      watched.forEach((el) => io.observe(el));
+      const onVis = () => (document.hidden ? stop() : start());
+      document.addEventListener("visibilitychange", onVis);
+
+      cleanupMotion = () => {
+        stop();
+        io.disconnect();
+        document.removeEventListener("visibilitychange", onVis);
         window.removeEventListener("mousemove", onMove);
         window.removeEventListener("scroll", onScroll);
       };

@@ -945,3 +945,60 @@
     font-size: 14px;
   }
 }
+
+/* ---------- 検索条件の解釈メモ / 保存した検索条件 ---------- */
+.cond-bar__note {
+  padding: 0 40px 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+.save-search { position: relative; display: flex; align-items: center; gap: 8px; }
+.cond-btn--save.is-on { background: var(--skyblue); border-color: var(--blue); color: var(--blue); }
+.save-search__toggle { white-space: nowrap; }
+.save-search__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  min-width: 260px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: var(--white);
+  border: 0.5px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+}
+.save-search__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text);
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+.save-search__item:hover { background: var(--bg); }
+.save-search__item-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.save-search__item-date { font-size: 11px; color: var(--sub); flex-shrink: 0; }
+.save-search__flash {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 41;
+  background: var(--ink);
+  color: var(--white);
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+@media (max-width: 768px) {
+  .cond-bar__note { padding: 0 20px 10px; }
+  .save-search__menu { right: auto; left: 0; min-width: 220px; }
+}

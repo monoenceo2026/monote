@@ -13,12 +13,13 @@ import {
   recordImpressions,
   savedCompanies,
   savedIds,
-  searchArticles,
+  searchArticlesRelated,
   searchCompanies,
   type Company,
   type Condition,
 } from "@/lib/repo";
 import { inquiryEventCounts } from "@/lib/extra/search";
+import { articleTerms, parseQuery } from "@/lib/search-query";
 import {
   Collapsible,
   CompareBar,
@@ -30,6 +31,7 @@ import {
   Results,
   RevealOnParams,
   SaveButton,
+  SaveSearchButton,
 } from "./parts";
 import "@/css/search.css";
 
@@ -79,15 +81,56 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const conds = allConditions();
   const byId = new Map(conds.map((c) => [c.id, c]));
 
-  /* 適用条件: cond= が明示されていればそれ、q も cond も無ければ Figma デモ状態の4条件 */
+  /* キーワードは構造化条件へ解決する（「SUS304の薄板を小ロット・短納期で」→ 材質/ロット/納期） */
+  const parsed = q ? parseQuery(q) : null;
+  const explicitCond = condParam !== undefined;
+
+  /* 適用条件: cond= が明示されていればそれ、無ければキーワード解決、どちらも無ければ既定の4条件 */
   let conditionIds: number[];
-  if (condParam !== undefined) {
-    conditionIds = [...new Set(condParam.split(",").map((s) => parseInt(s, 10)).filter((n) => byId.has(n)))];
+  if (explicitCond) {
+    conditionIds = [...new Set(condParam!.split(",").map((s) => parseInt(s, 10)).filter((n) => byId.has(n)))];
+  } else if (parsed && parsed.conditionIds.length) {
+    conditionIds = parsed.conditionIds;
   } else if (!q) {
     conditionIds = DEFAULT_CONDS.map(([cat, label]) => conds.find((c) => c.category === cat && c.label === label)?.id)
       .filter((n): n is number => typeof n === "number");
   } else {
     conditionIds = [];
+  }
+
+  /* 全文検索に使う残りキーワード（条件に解決できた語は除く） */
+  let keyword = parsed ? parsed.keyword || undefined : undefined;
+
+  /* 0件のときは自動で緩和する（語を削る → 優先度の低い条件を外す）。
+     条件が1つも取れていない純粋なキーワード検索は緩和せず、素直に0件を見せる。 */
+  const relaxed: string[] = [];
+  if (!explicitCond && q && conditionIds.length) {
+    const hits = (kw: string | undefined, ids: number[]) => searchCompanies({ q: kw, conditionIds: ids, sort: "match" }).length;
+
+    /* 「医療機器向け 精密」のように複数語が残った場合、まず一番長い語だけで試す */
+    if (keyword && hits(keyword, conditionIds) === 0) {
+      const tokens = keyword.split(/[\s　]+/).filter((t) => t.length >= 2).sort((a, b) => b.length - a.length);
+      const better = tokens.find((t) => t !== keyword && hits(t, conditionIds) > 0);
+      if (better) keyword = better;
+    }
+    if (hits(keyword, conditionIds) === 0) {
+      if (keyword && hits(undefined, conditionIds) > 0) {
+        relaxed.push(`キーワード「${keyword}」`);
+        keyword = undefined;
+      } else {
+        const dropOrder = ["precision", "area", "cert", "delivery", "lot", "process", "material"];
+        let ids = [...conditionIds];
+        if (keyword) { relaxed.push(`キーワード「${keyword}」`); keyword = undefined; }
+        for (const cat of dropOrder) {
+          if (hits(keyword, ids) > 0 || ids.length <= 1) break;
+          const drop = ids.filter((id) => byId.get(id)!.category === cat);
+          if (!drop.length) continue;
+          ids = ids.filter((id) => byId.get(id)!.category !== cat);
+          relaxed.push(...drop.map((id) => byId.get(id)!.label));
+        }
+        conditionIds = ids;
+      }
+    }
   }
 
   const sortParam = one(sp.sort);
@@ -96,7 +139,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const tab: "companies" | "articles" = one(sp.tab) === "articles" ? "articles" : "companies";
 
   const filters = {
-    q: q || undefined,
+    q: keyword,
     conditionIds,
     sort: (sort === "updated" ? "updated" : "match") as "match" | "updated",
   };
@@ -104,7 +147,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   if (sort === "response") {
     companies = [...companies].sort((a, b) => (a.response_days ?? 99) - (b.response_days ?? 99));
   }
-  const articles = searchArticles(filters);
+  /* 記事は「条件のいずれか、またはキーワード」に当たるものを関連度順で（AND だと 0〜1件になり実用にならない） */
+  const articles = searchArticlesRelated({
+    terms: parsed ? articleTerms(parsed) : [],
+    conditionIds,
+  });
   const counts = conditionCounts(filters);
 
   const total = companies.length;
@@ -128,6 +175,18 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       }
     : null;
 
+  /* キーワードをどう解釈したかの説明（利用者が結果を信用できるように） */
+  const interpretNote = (() => {
+    if (!q) return "";
+    const parts: string[] = [];
+    if (!explicitCond && parsed?.conditionIds.length) {
+      parts.push(`「${q}」を ${applied.map((c) => c.label).join("・")} として検索しました`);
+    }
+    if (relaxed.length) parts.push(`該当が無かったため ${relaxed.join("・")} を外しています`);
+    if (!parts.length && keyword) parts.push(`「${keyword}」をキーワードとして検索しました`);
+    return parts.join("／");
+  })();
+
   /* セッション由来（保存・比較・ログイン） */
   const user = await currentUser();
   const key = await sessionKey();
@@ -139,7 +198,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   /* インプレッション計測（1ページ目のみ） */
   if (page === 1 && pageCompanies.length) {
     const term = applied.map((c) => c.label).join("×") || q;
-    recordImpressions(pageCompanies.map((c) => c.id), term);
+    recordImpressions(pageCompanies.map((c) => c.id), term, key);
   }
 
   /* カード用データ */
@@ -401,8 +460,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
             </div>
             <NavButton className="cond-btn" id="condClearAll" mutate={{ cond: "", page: null }}>すべて解除</NavButton>
           </div>
-          <button className="cond-btn cond-btn--save" type="button">この検索結果を保存</button>
+          <SaveSearchButton />
         </div>
+        {interpretNote ? <p className="cond-bar__note">{interpretNote}</p> : null}
       </div>
 
       <div className="layout">

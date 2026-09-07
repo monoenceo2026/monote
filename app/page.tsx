@@ -13,10 +13,10 @@ const BLOB_PATH =
   "M512.094 386.906C470.434 292.062 560.644 218.519 523.701 124.893C423.368 -98.228 38.9403 -4.07296 71.5899 262.391C85.9006 379.276 -72.418 486.837 41.4844 599.219C38.0393 595.88 25.2126 580.197 20.9194 575.11C73.0209 666.669 223.919 718.065 300.455 609.922C396.813 520.217 575.114 593.496 512.094 386.906Z";
 
 const CAROUSEL = [
-  { img: "carousel-kezuru", title: "削る・切る", sub: "試作したい／量産したい／コストを下げたい", q: "切削", subW: 164 },
-  { img: "carousel-mageru", title: "曲げる・つなぐ", sub: "板金／プレス／溶接", q: "板金" },
-  { img: "carousel-nagashikomu", title: "かたちを流し込む", sub: "鋳造／鍛造／樹脂成形", q: "鋳造" },
-  { img: "carousel-hyomen", title: "表面を整える", sub: "表面処理／めっき／アルマイト／熱処理", q: "表面処理", subW: 129 },
+  { img: "cat-kezuru", title: "削る・切る", sub: "試作したい／量産したい／コストを下げたい", q: "切削", subW: 164 },
+  { img: "cat-mageru", title: "曲げる・つなぐ", sub: "板金／プレス／溶接", q: "板金" },
+  { img: "cat-nagashikomu", title: "かたちを流し込む", sub: "鋳造／鍛造／樹脂成形", q: "鋳造" },
+  { img: "cat-hyomen", title: "表面を整える", sub: "表面処理／めっき／アルマイト／熱処理", q: "表面処理", subW: 129 },
   { img: "cat-kumitateru", title: "組み立てる", sub: "組立／量産／装置・機械", q: "組立" },
   { img: "cat-hakaru", title: "測る・確かめる", sub: "検査／品質管理／測定", q: "検査" },
   { img: "cat-zairyo", title: "材料から探す", sub: "鉄／ステンレス／アルミ／樹脂／繊維", q: "ステンレス" },
@@ -45,8 +45,8 @@ export default function TopPage() {
         <nav>
           <Link href="/search">企業を探す</Link>
           <Link href="/articles">記事を読む</Link>
-          <Link href="/search?tab=articles">特集</Link>
-          <a href="#stats">MONOTEとは</a>
+          <Link href="/features">特集</Link>
+          <Link href="/about">MONOTEとは</Link>
           <Link className="btn btn--pill btn--dark btn--block" href="/signup">無料で企業登録</Link>
         </nav>
       </div>
@@ -55,8 +55,8 @@ export default function TopPage() {
         {/* ==================== FV / hero ==================== */}
         <section className="hero">
           <div className="hero__motion" aria-hidden="true">
-            <img className="hero-metal hero-metal--tl" src="/assets/img/monoen-symbol-metal.png" alt="" />
-            <img className="hero-metal hero-metal--r" src="/assets/img/monoen-symbol-metal.png" alt="" />
+            <img className="hero-metal hero-metal--tl" src="/assets/img/monoen-symbol-metal.webp" alt="" />
+            <img className="hero-metal hero-metal--r" src="/assets/img/monoen-symbol-metal.webp" alt="" />
           </div>
 
           <div className="hero__body">
@@ -106,7 +106,7 @@ export default function TopPage() {
             <div className="pick__track">
               {CAROUSEL.map((c) => (
                 <Link key={c.title} className="pick-card" href={`/search?q=${encodeURIComponent(c.q)}`} draggable={false}>
-                  <img src={`/assets/img/${c.img}.png`} alt="" draggable={false} />
+                  <img src={`/assets/img/${c.img}.webp`} alt="" draggable={false} />
                   <h3>{c.title}</h3>
                   <p style={c.subW ? { width: c.subW } : undefined}>{c.sub}</p>
                   <span className="pick-card__arrow" aria-hidden="true">

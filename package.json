@@ -4,8 +4,7 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "next start -p 3000",
-    "seed": "node --experimental-strip-types lib/seed-cli.ts"
+    "start": "next start -p 3000"
   },
   "repository": {
     "type": "git",

@@ -9,7 +9,7 @@ import {
   companyById,
   conditionsOfArticle,
   conditionsOfCompany,
-  recordEvent,
+  recordView,
   savedIds,
   searchCompanies,
 } from "@/lib/repo";
@@ -96,7 +96,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   /* 保存状態・閲覧イベント */
   const key = await sessionKey();
   const saved = savedIds(key, "article").includes(article.id);
-  recordEvent("article_view", article.company_id, article.id);
+  recordView(key, "article_view", { companyId: article.company_id, articleId: article.id });
 
   const tocItems = sections.map((s, i) => ({ id: `sec-${i + 1}`, label: s.heading }));
   const inquiryHref = `/inquiry/new?companies=${company.id}&source=article`;

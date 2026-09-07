@@ -1,0 +1,44 @@
+.feat { width: min(1280px, calc(100% - 40px)); margin-inline: auto; padding: 64px 0 120px; }
+.feat__label { font-size: 12px; letter-spacing: 0.14em; color: var(--sub); }
+.feat__title {
+  margin-top: 10px;
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.feat__lead { margin-top: 16px; font-size: 14px; line-height: 1.9; color: var(--sub); max-width: 640px; }
+.feat__grid {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+.feat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 28px 24px;
+  background: var(--white);
+  border: 0.5px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.35s var(--ease-out), box-shadow 0.35s ease;
+}
+.feat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12); }
+.feat-card__title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.feat-card__lead { font-size: 13px; line-height: 1.8; color: var(--sub); flex: 1; }
+.feat-card__conds { display: flex; flex-wrap: wrap; gap: 6px; }
+.feat-card__count { font-size: 13px; color: var(--text); padding-top: 12px; border-top: 0.5px solid var(--line); }
+.feat-card__count strong { font-weight: 600; font-size: 15px; }
+@media (max-width: 768px) {
+  .feat { padding: 40px 0 88px; }
+  .feat__title { font-size: 26px; }
+  .feat__grid { grid-template-columns: 1fr; gap: 16px; }
+}

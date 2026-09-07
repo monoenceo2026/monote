@@ -413,3 +413,105 @@ export function RevealOnParams() {
   }, [sp]);
   return null;
 }
+
+/* ============================================================
+   この検索結果を保存 — 条件セットを端末に保存して呼び戻す
+   （アカウント横断の保存は Phase2。まずは実際に動く形にしておく）
+   ============================================================ */
+
+type SavedSearch = { label: string; url: string; at: string };
+const SS_KEY = "monote:saved-searches";
+
+function readSaved(): SavedSearch[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(SS_KEY) || "[]");
+    return Array.isArray(v) ? (v as SavedSearch[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function SaveSearchButton() {
+  const router = useRouter();
+  const [items, setItems] = useState<SavedSearch[]>([]);
+  const [open, setOpen] = useState(false);
+  const [flash, setFlash] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  const currentUrl = () => window.location.pathname + window.location.search;
+
+  useEffect(() => {
+    const list = readSaved();
+    setItems(list);
+    setSaved(list.some((s) => s.url === currentUrl()));
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest(".save-search")) setOpen(false);
+    };
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [open]);
+
+  const label = () => {
+    const chips = Array.from(document.querySelectorAll("#condChips .cond-chip__t")).map((el) => el.textContent?.trim()).filter(Boolean);
+    const q = new URLSearchParams(window.location.search).get("q");
+    return chips.length ? chips.join("・") : q || "すべての企業";
+  };
+
+  const save = () => {
+    const url = currentUrl();
+    const list = readSaved().filter((s) => s.url !== url);
+    if (saved) {
+      localStorage.setItem(SS_KEY, JSON.stringify(list));
+      setItems(list);
+      setSaved(false);
+      setFlash("保存を解除しました");
+    } else {
+      const next = [{ label: label(), url, at: new Date().toISOString().slice(0, 10).replaceAll("-", ".") }, ...list].slice(0, 12);
+      localStorage.setItem(SS_KEY, JSON.stringify(next));
+      setItems(next);
+      setSaved(true);
+      setFlash("この条件を保存しました");
+    }
+    window.setTimeout(() => setFlash(""), 2200);
+  };
+
+  return (
+    <div className="save-search">
+      <button className={`cond-btn cond-btn--save${saved ? " is-on" : ""}`} type="button" onClick={save} aria-pressed={saved}>
+        {saved ? "保存済みの検索条件" : "この検索結果を保存"}
+      </button>
+      {items.length > 0 ? (
+        <button
+          className="cond-btn save-search__toggle"
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-label="保存した検索条件を開く"
+        >
+          保存した条件 {items.length}
+        </button>
+      ) : null}
+      {open ? (
+        <div className="save-search__menu" role="menu">
+          {items.map((s) => (
+            <button
+              key={s.url}
+              className="save-search__item"
+              type="button"
+              role="menuitem"
+              onClick={() => { setOpen(false); router.push(s.url); }}
+            >
+              <span className="save-search__item-label">{s.label}</span>
+              <span className="save-search__item-date">{s.at}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {flash ? <span className="save-search__flash" role="status">{flash}</span> : null}
+    </div>
+  );
+}

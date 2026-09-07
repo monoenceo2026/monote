@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { currentUser, sessionKey } from "@/lib/session";
-import { savedCompanies, savedArticles, compareList } from "@/lib/repo";
+import { savedCompanies, savedArticles, compareList, inboxOf } from "@/lib/repo";
 import { logoutAction } from "@/app/actions";
 
 export type HeaderVariant = "top" | "sub" | "admin" | "plain";
@@ -38,6 +38,10 @@ export default async function Header({
   const nCompare = compareList(key).length;
 
   if (variant === "admin") {
+    /* 受信箱の未対応件数は実データ（固定値だと画面ごとに矛盾する） */
+    const openInquiries = user?.company_id
+      ? inboxOf(user.company_id).filter((i) => i.recipient_status === "open").length
+      : 0;
     return (
       <header className="site-header">
         <div className="site-header__inner site-header__inner--admin">
@@ -47,7 +51,9 @@ export default async function Header({
             <Link href="/admin" className={adminActive === "dashboard" ? "is-active" : ""}>ダッシュボード</Link>
             <Link href="/admin/articles/new" className={adminActive === "articles" ? "is-active" : ""}>記事</Link>
             <Link href="/admin#company-info" className={adminActive === "profile" ? "is-active" : ""}>会社情報</Link>
-            <Link href="/admin#inbox" className={adminActive === "inbox" ? "is-active" : ""}>相談の受信箱 <span data-inbox-count>2</span></Link>
+            <Link href="/admin#inbox" className={adminActive === "inbox" ? "is-active" : ""}>
+              相談の受信箱 <span data-inbox-count>{openInquiries}</span>
+            </Link>
           </nav>
           <div className="site-header__actions">
             <span className="admin-company-name">{user?.name ?? "株式会社○○製作所"}</span>
@@ -94,8 +100,8 @@ export default async function Header({
           <nav className="site-header__nav" aria-label="グローバルナビゲーション">
             <Link href="/search" className={active === "search" ? "is-active" : ""}>企業を探す</Link>
             <Link href="/articles" className={active === "articles" ? "is-active" : ""}>記事を読む</Link>
-            <Link href="/search?tab=articles">特集</Link>
-            <a href="#stats">MONOTEとは</a>
+            <Link href="/features" className={active === "features" ? "is-active" : ""}>特集</Link>
+            <Link href="/about">MONOTEとは</Link>
           </nav>
           <div className="site-header__actions">
             {user ? (
@@ -120,7 +126,7 @@ export default async function Header({
 
   /* sub */
   const savedBtn = savedKind === "articles"
-    ? { label: `保存した記事 ${nSavedArticles}`, href: "/my/compare#articles" }
+    ? { label: `保存した記事 ${nSavedArticles}`, href: "/my/compare?tab=articles" }
     : { label: `保存した企業 ${nSavedCompanies}`, href: "/my/compare" };
   return (
     <header className="site-header">

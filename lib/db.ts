@@ -37,11 +37,23 @@ export function db(): Database.Database {
   _db.pragma("journal_mode = WAL");
   _db.pragma("foreign_keys = ON");
   _db.exec(SCHEMA);
-  /* lightweight migrations for DBs created before a column existed */
-  const articleCols = _db.prepare("PRAGMA table_info(articles)").all() as Array<{ name: string }>;
-  if (!articleCols.some((c) => c.name === "thumb")) {
-    _db.exec("ALTER TABLE articles ADD COLUMN thumb TEXT NOT NULL DEFAULT ''");
-  }
+  /* 既存DB向けの軽量マイグレーション。
+     ビルド後は同一プロセス内に複数のモジュール実体が載ることがあるため、
+     同時実行で重複エラーになっても落ちないようにする。 */
+  const addColumn = (table: string, column: string, ddl: string) => {
+    const cols = _db!.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+    if (cols.some((c) => c.name === column)) return;
+    try {
+      _db!.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+    } catch (e) {
+      const msg = String((e as Error).message ?? "");
+      if (!/duplicate column name/i.test(msg)) throw e;
+    }
+  };
+  addColumn("articles", "thumb", "thumb TEXT NOT NULL DEFAULT ''");
+  addColumn("events", "session_id", "session_id TEXT NOT NULL DEFAULT ''");
+  addColumn("inquiries", "session_id", "session_id TEXT NOT NULL DEFAULT ''");
+
   const seeded = _db.prepare("SELECT COUNT(*) AS n FROM companies").get() as { n: number };
   if (seeded.n === 0) runSeed(_db);
   return _db;

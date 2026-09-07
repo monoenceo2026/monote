@@ -59,6 +59,34 @@ export type SearchFilters = {
   sort?: "match" | "updated";
 };
 
+/** 記事タブ用: 条件 OR キーワードのいずれかに当たる公開記事（関連度順） */
+export function searchArticlesRelated(opts: { terms?: string[]; conditionIds?: number[] }): Article[] {
+  const terms = (opts.terms ?? []).map((t) => t.trim()).filter(Boolean);
+  const condIds = opts.conditionIds ?? [];
+  const clauses: string[] = [];
+  const params: unknown[] = [];
+
+  if (condIds.length) {
+    clauses.push(`EXISTS (SELECT 1 FROM article_conditions ac WHERE ac.article_id = t.id AND ac.condition_id IN (${condIds.map(() => "?").join(",")}))`);
+    params.push(...condIds);
+  }
+  for (const term of terms) {
+    const like = `%${term}%`;
+    clauses.push("(t.title LIKE ? OR t.excerpt LIKE ? OR t.tag1 LIKE ? OR t.tag2 LIKE ?)");
+    params.push(like, like, like, like);
+  }
+
+  const where = clauses.length ? `t.status='published' AND (${clauses.join(" OR ")})` : "t.status='published'";
+  const relevance = condIds.length
+    ? `(SELECT COUNT(*) FROM article_conditions r WHERE r.article_id = t.id AND r.condition_id IN (${condIds.map(() => "?").join(",")}))`
+    : "0";
+  const sql = `SELECT t.*, c.name AS company_name, c.slug AS company_slug, ${relevance} AS relevance
+    FROM articles t JOIN companies c ON c.id = t.company_id
+    WHERE ${where} ORDER BY relevance DESC, t.published_at DESC`;
+  /* SELECT 側の relevance が先に来るのでバインド順は condIds → where */
+  return db().prepare(sql).all(...condIds, ...params) as Article[];
+}
+
 function conditionFilterSql(conditionIds: number[], joinTable: string, fkCol: string): { sql: string; params: number[] } {
   if (!conditionIds.length) return { sql: "", params: [] };
   const rows = db().prepare(
@@ -81,8 +109,10 @@ export function searchCompanies(f: SearchFilters): Array<Company & { match_count
   let where = "1=1";
   if (f.q?.trim()) {
     const like = `%${f.q.trim().split(/\s+/).join("%")}%`;
-    where += ` AND (t.name LIKE ? OR t.description LIKE ? OR t.specialty_process LIKE ? OR t.industries LIKE ? OR t.equipment LIKE ?)`;
-    params.push(like, like, like, like, like);
+    where += ` AND (t.name LIKE ? OR t.description LIKE ? OR t.specialty_process LIKE ? OR t.specialty_process_sub LIKE ?
+      OR t.specialty_lot LIKE ? OR t.specialty_quality LIKE ? OR t.industries LIKE ? OR t.equipment LIKE ?
+      OR t.prefecture LIKE ? OR t.city LIKE ?)`;
+    params.push(like, like, like, like, like, like, like, like, like, like);
   }
   const matchExpr = f.conditionIds?.length
     ? `(SELECT COUNT(*) FROM company_conditions m WHERE m.company_id = t.id AND m.condition_id IN (${f.conditionIds.map(() => "?").join(",")}))`
@@ -115,15 +145,34 @@ export function searchArticles(f: SearchFilters): Article[] {
   return db().prepare(sql).all(...params, ...cond.params) as Article[];
 }
 
-/** counts per condition, respecting the other filters (for the 絞り込む sidebar) */
+/**
+ * 絞り込みサイドバーの件数。
+ * ファセットの定石どおり、同じカテゴリの条件は外し、他カテゴリの条件は効かせて数える
+ * （「ステンレスを選んだ状態で、加工を切り替えたら何社になるか」が分かる件数になる）。
+ */
 export function conditionCounts(f: SearchFilters): Map<number, number> {
-  const companies = searchCompanies({ ...f, conditionIds: [] });
-  if (!companies.length) return new Map();
-  const ids = companies.map((c) => c.id);
-  const rows = db().prepare(
-    `SELECT condition_id, COUNT(*) AS n FROM company_conditions WHERE company_id IN (${ids.map(() => "?").join(",")}) GROUP BY condition_id`
-  ).all(...ids) as Array<{ condition_id: number; n: number }>;
-  return new Map(rows.map((r) => [r.condition_id, r.n]));
+  const applied = f.conditionIds ?? [];
+  const conds = allConditions();
+  const catOf = new Map(conds.map((c) => [c.id, c.category]));
+  const categories = [...new Set(conds.map((c) => c.category))];
+  const out = new Map<number, number>();
+
+  for (const cat of categories) {
+    /* このカテゴリ以外の適用条件を維持した母集合 */
+    const base = searchCompanies({ ...f, conditionIds: applied.filter((id) => catOf.get(id) !== cat) });
+    if (!base.length) {
+      for (const c of conds) if (c.category === cat) out.set(c.id, 0);
+      continue;
+    }
+    const ids = base.map((c) => c.id);
+    const rows = db().prepare(
+      `SELECT condition_id, COUNT(*) AS n FROM company_conditions
+       WHERE company_id IN (${ids.map(() => "?").join(",")}) GROUP BY condition_id`
+    ).all(...ids) as Array<{ condition_id: number; n: number }>;
+    const byId = new Map(rows.map((r) => [r.condition_id, r.n]));
+    for (const c of conds) if (c.category === cat) out.set(c.id, byId.get(c.id) ?? 0);
+  }
+  return out;
 }
 
 /* ---------------- companies / articles ---------------- */
@@ -268,23 +317,28 @@ export type NewInquiry = {
   attachments: string[]; anonymous: boolean; no_forward: boolean;
   contact_company: string; contact_name: string; contact_email: string; contact_phone: string;
   source: string; recipientCompanyIds: number[]; createdBy?: number | null; status?: "draft" | "sent";
+  sessionId?: string;
 };
 
 export function createInquiry(inq: NewInquiry): number {
   const d = db();
+  /* 相談本体・送信先・計測イベントは1トランザクションで（途中失敗で孤立行を残さない） */
+  const tx = d.transaction((): number => {
   const id = d.prepare(
     `INSERT INTO inquiries (type, process, material, quantity, deadline, size, required_precision, budget, industry, note,
-      attachments, anonymous, no_forward, contact_company, contact_name, contact_email, contact_phone, source, status, created_by)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+      attachments, anonymous, no_forward, contact_company, contact_name, contact_email, contact_phone, source, status, created_by, session_id)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).run(
     inq.type, inq.process, inq.material, inq.quantity, inq.deadline, inq.size, inq.required_precision,
     inq.budget, inq.industry, inq.note, JSON.stringify(inq.attachments ?? []),
     inq.anonymous ? 1 : 0, inq.no_forward ? 1 : 0,
     inq.contact_company, inq.contact_name, inq.contact_email, inq.contact_phone,
-    inq.source, inq.status ?? "sent", inq.createdBy ?? null
+    inq.source, inq.status ?? "sent", inq.createdBy ?? null, inq.sessionId ?? ""
   ).lastInsertRowid as number;
   const rec = d.prepare("INSERT INTO inquiry_recipients (inquiry_id, company_id) VALUES (?,?)");
+  const exists = d.prepare("SELECT 1 FROM companies WHERE id = ?");
   for (const cid of inq.recipientCompanyIds) {
+    if (!exists.get(cid)) continue; // 存在しない企業IDは無視（不正な送信先で相談全体を失わせない）
     rec.run(id, cid);
     if ((inq.status ?? "sent") === "sent") {
       recordEvent("inquiry", cid);
@@ -292,6 +346,8 @@ export function createInquiry(inq: NewInquiry): number {
     }
   }
   return id;
+  });
+  return tx();
 }
 
 export function inboxOf(companyId: number) {
@@ -304,8 +360,17 @@ export function inboxOf(companyId: number) {
 export function setInquiryStatus(companyId: number, inquiryId: number, status: "replied" | "declined") {
   db().prepare("UPDATE inquiry_recipients SET status=? WHERE inquiry_id=? AND company_id=?").run(status, inquiryId, companyId);
 }
+/** 送信済みの相談だけを履歴に出す（下書きは draftsOf で別扱い） */
 export function inquiryHistoryOf(sessionUserId: number) {
-  return db().prepare("SELECT * FROM inquiries WHERE created_by = ? ORDER BY created_at DESC").all(sessionUserId) as any[];
+  return db().prepare(
+    "SELECT * FROM inquiries WHERE created_by = ? AND status = 'sent' ORDER BY created_at DESC"
+  ).all(sessionUserId) as any[];
+}
+
+export function inquiryDraftsOf(sessionUserId: number) {
+  return db().prepare(
+    "SELECT * FROM inquiries WHERE created_by = ? AND status = 'draft' ORDER BY created_at DESC"
+  ).all(sessionUserId) as any[];
 }
 
 /* ---------------- company profile (signup / admin) ---------------- */
@@ -342,14 +407,29 @@ export function createCompany(fields: { slug: string; name: string; prefecture: 
 
 /* ---------------- articles (editor) ---------------- */
 
+const ARTICLE_TITLE_MAX = 200;
+const ARTICLE_BODY_MAX = 200_000;
+
 export function saveArticle(a: {
   id?: number; company_id: number; title: string; body: string; theme: string;
   status: "draft" | "review" | "published"; tag1?: string; tag2?: string; excerpt?: string;
   conditionIds?: number[];
 }): number {
   const d = db();
+  a = { ...a, title: (a.title ?? "").slice(0, ARTICLE_TITLE_MAX), body: (a.body ?? "").slice(0, ARTICLE_BODY_MAX) };
   let id = a.id ?? 0;
-  const slugBase = "post-" + Date.now().toString(36);
+  /* 他社の記事IDを渡されても触らせない（条件テーブルまで書き換えられるのを防ぐ） */
+  if (id) {
+    const owner = d.prepare("SELECT company_id FROM articles WHERE id = ?").get(id) as { company_id: number } | undefined;
+    if (!owner || owner.company_id !== a.company_id) {
+      throw new Error("saveArticle: article does not belong to this company");
+    }
+  }
+  /* slug は時刻＋乱数＋衝突時リトライで一意にする（同時保存でも UNIQUE 違反にしない） */
+  const newSlug = () => "post-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
+  let slugBase = newSlug();
+  const slugTaken = d.prepare("SELECT 1 FROM articles WHERE slug = ?");
+  for (let i = 0; i < 5 && slugTaken.get(slugBase); i++) slugBase = newSlug();
   if (id) {
     d.prepare(
       `UPDATE articles SET title=?, body=?, theme=?, status=?, tag1=COALESCE(?, tag1), tag2=COALESCE(?, tag2),
@@ -377,9 +457,55 @@ export function recordEvent(type: string, companyId?: number | null, articleId?:
   db().prepare("INSERT INTO events (type, company_id, article_id, term) VALUES (?,?,?,?)").run(type, companyId ?? null, articleId ?? null, term);
 }
 
-export function recordImpressions(companyIds: number[], term: string) {
-  const ins = db().prepare("INSERT INTO events (type, company_id, term) VALUES ('impression', ?, ?)");
-  const tx = db().transaction(() => { for (const id of companyIds) ins.run(id, term); });
+const DEDUPE_MINUTES = 30;
+
+/**
+ * 同じ閲覧の再レンダー（保存・比較の revalidate、リロード）で計測が水増しされないよう、
+ * セッション＋対象＋検索条件が同じイベントは一定時間内は1回だけ記録する。
+ */
+function recordEventOnce(
+  sessionId: string,
+  type: string,
+  opts: { companyId?: number | null; articleId?: number | null; term?: string }
+) {
+  const d = db();
+  const { companyId = null, articleId = null, term = "" } = opts;
+  const dup = d.prepare(
+    `SELECT 1 FROM events
+     WHERE session_id = ? AND type = ? AND IFNULL(company_id,-1) = IFNULL(?,-1)
+       AND IFNULL(article_id,-1) = IFNULL(?,-1) AND term = ?
+       AND created_at >= datetime('now', ?)`
+  ).get(sessionId, type, companyId, articleId, term, `-${DEDUPE_MINUTES} minutes`);
+  if (dup) return false;
+  d.prepare("INSERT INTO events (type, company_id, article_id, term, session_id) VALUES (?,?,?,?,?)")
+    .run(type, companyId, articleId, term, sessionId);
+  return true;
+}
+
+/** ページ表示の計測（セッション単位で重複排除。sessionId 未指定なら毎回記録） */
+export function recordView(
+  sessionId: string,
+  type: string,
+  opts: { companyId?: number | null; articleId?: number | null; term?: string } = {}
+) {
+  if (!sessionId) {
+    recordEvent(type, opts.companyId ?? null, opts.articleId ?? null, opts.term ?? "");
+    return;
+  }
+  recordEventOnce(sessionId, type, opts);
+}
+
+export function recordImpressions(companyIds: number[], term: string, sessionId = "") {
+  const d = db();
+  if (!sessionId) {
+    const ins = d.prepare("INSERT INTO events (type, company_id, term) VALUES ('impression', ?, ?)");
+    const tx = d.transaction(() => { for (const id of companyIds) ins.run(id, term); });
+    tx();
+    return;
+  }
+  const tx = d.transaction(() => {
+    for (const id of companyIds) recordEventOnce(sessionId, "impression", { companyId: id, term });
+  });
   tx();
 }
 
@@ -396,11 +522,12 @@ export function dashboardStats(companyId: number) {
     saves: countEvents(companyId, "save", 30),
     inquiries: countEvents(companyId, "inquiry", 30),
   };
+  /* 前期間は [60日前, 30日前) — 当期間 [30日前, 現在) と隙間なく接続させる */
   const prev = {
-    impressions: countEvents(companyId, "impression", 61, 31),
-    views: countEvents(companyId, "click", 61, 31) + countEvents(companyId, "view", 61, 31),
-    saves: countEvents(companyId, "save", 61, 31),
-    inquiries: countEvents(companyId, "inquiry", 61, 31),
+    impressions: countEvents(companyId, "impression", 60, 30),
+    views: countEvents(companyId, "click", 60, 30) + countEvents(companyId, "view", 60, 30),
+    saves: countEvents(companyId, "save", 60, 30),
+    inquiries: countEvents(companyId, "inquiry", 60, 30),
   };
   const terms = db().prepare(
     `SELECT term,
