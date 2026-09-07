@@ -43,10 +43,10 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <div style={{ fontSize: 62, lineHeight: 1.3, fontWeight: 600, letterSpacing: -1 }}>
-            つくりたいものから、
-            <br />
-            つくれる会社を探す。
+          {/* satori は複数の子を持つ div に明示的な display を要求し、<br /> も扱えない */}
+          <div style={{ display: "flex", flexDirection: "column", fontSize: 62, lineHeight: 1.3, fontWeight: 600, letterSpacing: -1 }}>
+            <div style={{ display: "flex" }}>つくりたいものから、</div>
+            <div style={{ display: "flex" }}>つくれる会社を探す。</div>
           </div>
           <div style={{ fontSize: 26, lineHeight: 1.6, color: "#48494C" }}>
             加工・材質・ロット・精度・認証の条件で、技術記事と企業をまとめて検索。
