@@ -1,16 +1,21 @@
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import Header from "@/components/Header";
+import BodyClass from "./BodyClass";
 import { companyById, conditionsOfCompany } from "@/lib/repo";
 import { currentUser } from "@/lib/session";
-import { recentSearchCount } from "@/lib/extra/signup";
+import { recentSearchCount, worksCount } from "@/lib/extra/signup";
 import SignupClient, { type SignupInitial } from "./SignupClient";
 import {
   AREA_OPTIONS,
   CERT_OPTIONS,
   MAT_CHIPS,
   PRECISION_OPTIONS,
-  PRICE_OPTIONS,
   PRIMARY_PROC_CHIPS,
+  areaOption,
+  deadlineText,
+  precisionOption,
+  priceOption,
 } from "./defs";
 import "@/css/signup.css";
 
@@ -26,6 +31,10 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 /* ---------- 静的版の初期値（未ログイン時） ---------- */
 const STATIC_INITIAL: SignupInitial = {
   companyName: "",
+  prefecture: "",
+  city: "",
+  employees: "",
+  founded: "",
   procOn: ["レーザー切断", "曲げ・ベンダー", "TIG溶接", "組立"],
   matOn: ["ステンレス", "鉄・鋼", "アルミ"],
   lotMin: "1",
@@ -41,52 +50,44 @@ const STATIC_INITIAL: SignupInitial = {
   hard: "",
   pvName: "株式会社○○製作所",
   pvSub: "大阪府八尾市・30〜99名",
+  /* 充足度の文脈（フォーム外の項目。未ログイン=新規なので空） */
+  equipment: "",
+  description: "",
+  works: 0,
+  storedCompleteness: 0,
 };
 
 /* ---------- companyユーザー: 自社の条件・プロフィールを初期値に ---------- */
 function initialForCompany(companyId: number): SignupInitial {
   const c = companyById(companyId);
   if (!c) return STATIC_INITIAL;
-  const keySet = new Set(conditionsOfCompany(c.id).map((x) => `${x.category}:${x.label}`));
+  const conds = conditionsOfCompany(c.id);
+  const keySet = new Set(conds.map((x) => `${x.category}:${x.label}`));
 
   const procOn = [...new Set([...keySet].flatMap((k) => PRIMARY_PROC_CHIPS[k] ?? []))];
   const matOn = MAT_CHIPS.filter((ch) => ch.cond && keySet.has(ch.cond)).map((ch) => ch.label);
 
-  const precisionStr = c.precision_mm != null ? `±${c.precision_mm}mm` : "±0.05mm";
-  const precision = PRECISION_OPTIONS.includes(precisionStr) ? precisionStr : "±0.05mm";
-
-  const deadline =
-    c.delivery_min != null
-      ? c.delivery_max != null && c.delivery_max !== c.delivery_min
-        ? `${c.delivery_min}〜${c.delivery_max}日`
-        : `${c.delivery_min}日`
-      : "";
+  const precision = precisionOption(c.precision_mm) ?? PRECISION_OPTIONS[1];
+  const deadline = deadlineText(c.delivery_min, c.delivery_max);
 
   const has9001 = keySet.has("cert:ISO9001");
   const has14001 = keySet.has("cert:ISO14001");
   const cert = has9001 && has14001 ? CERT_OPTIONS[0] : has9001 ? "ISO9001" : has14001 ? "ISO14001" : "認証なし";
 
-  const areaSel = c.area.includes("全国")
-    ? "全国発送"
-    : c.area.includes("関東")
-      ? "関東エリア"
-      : c.area.includes("関西")
-        ? "関西エリア"
-        : AREA_OPTIONS[3];
-
-  const price = c.price_hint.includes("非公開")
-    ? "非公開"
-    : c.price_hint.includes("1万")
-      ? "試作 1万円〜"
-      : c.price_hint.includes("5万")
-        ? "試作 5万円〜"
-        : PRICE_OPTIONS[1];
+  const areaSel = c.area ? areaOption(c.area) : AREA_OPTIONS[3];
+  const price = priceOption(c.price_hint);
 
   const place = `${c.prefecture}${c.city}`;
   const pvSub = [place, c.employees].filter(Boolean).join("・") || STATIC_INITIAL.pvSub;
 
+  const works = worksCount(c.id);
+
   return {
     companyName: c.name,
+    prefecture: c.prefecture,
+    city: c.city,
+    employees: c.employees,
+    founded: c.founded != null ? String(c.founded) : "",
     procOn,
     matOn,
     lotMin: c.lot_min.toLocaleString("en-US"),
@@ -102,27 +103,45 @@ function initialForCompany(companyId: number): SignupInitial {
     hard: c.hard_conditions,
     pvName: c.name,
     pvSub,
+    equipment: c.equipment,
+    description: c.description,
+    works,
+    storedCompleteness: c.completeness,
   };
 }
 
+/* 共有ヘッダー（plain）。ログイン中は名前・ログアウトも出す＝他ルートと同じ見え方。
+   .page-signup は狭い画面でのヘッダー調整（css/signup.css）に使う */
 function SignupHeader() {
   return (
-    <header className="signup-header">
-      <div className="signup-header__inner">
-        <Link className="brand" href="/">MONOTE</Link>
-        <div className="signup-header__right">
-          <p className="signup-header__note">登録は無料です。途中でやめても内容は保存されます。</p>
-          <Link className="btn btn--box btn--outline" href="/">あとで続ける</Link>
-        </div>
-      </div>
-    </header>
+    <>
+      <BodyClass className="page-signup" />
+      <Header
+        variant="plain"
+        plainNote="登録は無料です。途中でやめても内容は保存されます。"
+        plainCta={{ label: "あとで続ける", href: "/" }}
+      />
+    </>
   );
 }
 
 /* ---------- 完了画面（?done=1） ---------- */
-function DoneScreen() {
+/* 保存直後の自社を実データで拾い、「検索でどう見えるか」への導線を出す */
+async function DoneScreen() {
+  const user = await currentUser();
+  const c = user?.role === "company" && user.company_id ? companyById(user.company_id) : null;
+
+  /* 検索リンクは自社に付いている条件のうち代表4つ（材質→加工→ロット→納期） */
+  const conds = c ? conditionsOfCompany(c.id) : [];
+  const order = ["material", "process", "lot", "delivery", "cert", "area"];
+  const picked = order
+    .map((cat) => conds.find((x) => x.category === cat))
+    .filter((x): x is (typeof conds)[number] => !!x)
+    .slice(0, 4);
+  const condHref = picked.length ? `/search?cond=${picked.map((x) => x.id).join(",")}` : "/search";
+
   return (
-    <main className="signup-main">
+    <main className="signup-main" id="main" tabIndex={-1}>
       <div className="signup-done container-wide reveal">
         <span className="signup-done__mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5 10 17.5 19 7" stroke="currentColor" strokeWidth="1.6" /></svg>
@@ -131,9 +150,32 @@ function DoneScreen() {
         <p className="signup-done__desc">
           ダッシュボードで見え方を確認できます。入力した条件は検索の絞り込みにも反映されています。
         </p>
+
+        {c ? (
+          <section className="signup-done__check">
+            <h2 className="signup-done__check-ttl">自社の検索での見え方</h2>
+            <p className="signup-done__check-sub">
+              {[`${c.prefecture}${c.city}`, c.employees].filter(Boolean).join("・") || "所在地・規模は未入力です"}
+              {picked.length ? `／${picked.map((x) => x.label).join("・")}` : ""}
+            </p>
+            <ul className="signup-done__links">
+              <li>
+                <Link href={`/companies/${c.slug}`}>企業ページ（/companies/{c.slug}）を見る</Link>
+              </li>
+              <li>
+                <Link href={condHref}>この条件の検索結果に自社が出るか確認する</Link>
+              </li>
+            </ul>
+          </section>
+        ) : null}
+
+        <p className="signup-note signup-done__note">
+          企業情報は自己申告のため、登録直後は「確認済み」バッジは付きません。運営確認後に「確認済み」が表示されます。
+        </p>
+
         <div className="signup-done__actions">
           <Link className="btn btn--box-lg btn--dark" href="/admin">ダッシュボードへ</Link>
-          <Link className="btn btn--box-lg btn--outline-thin" href="/search">検索での見え方を見る</Link>
+          <Link className="btn btn--box-lg btn--outline-thin" href={condHref}>検索での見え方を見る</Link>
         </div>
       </div>
     </main>
@@ -164,7 +206,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
     <>
       <SignupHeader />
 
-      <main className="signup-main">
+      <main className="signup-main" id="main" tabIndex={-1}>
         {/* ======= intro / steps ======= */}
         <div className="signup-intro container-wide reveal">
           <div className="signup-intro__txt">

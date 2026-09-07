@@ -29,3 +29,9 @@ export function createCompanyUser(email: string, name: string, companyId: number
     .prepare("INSERT INTO users (email, name, role, company_id) VALUES (?, ?, 'company', ?)")
     .run(email, name, companyId).lastInsertRowid as number;
 }
+
+/** 実績・事例（works）の件数 — 充足度の算出に使う（推奨5件） */
+export function worksCount(companyId: number): number {
+  const row = db().prepare("SELECT COUNT(*) AS n FROM works WHERE company_id = ?").get(companyId) as { n: number };
+  return row.n;
+}

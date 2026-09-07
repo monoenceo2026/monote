@@ -58,7 +58,8 @@ export default async function Header({
           <div className="site-header__actions">
             <span className="admin-company-name">{user?.name ?? "株式会社○○製作所"}</span>
             {adminActive === "articles" ? (
-              <button className="btn btn--box btn--outline" type="button">ヘルプ</button>
+              /* 記事ガイドラインへ（押しても何も起きないボタンだったのを実リンクに） */
+              <Link className="btn btn--box btn--outline" href="/guidelines">ヘルプ</Link>
             ) : (
               <Link className="btn btn--box btn--dark" href="/admin/articles/new">記事を書く</Link>
             )}
@@ -75,14 +76,13 @@ export default async function Header({
           <Link className="brand" href="/">MONOTE</Link>
           <div className="site-header__actions">
             {plainNote ? <span className="header-note">{plainNote}</span> : null}
-            {plainCta ? <Link className="btn btn--box btn--outline" href={plainCta.href}>{plainCta.label}</Link> : null}
+            {plainCta ? <Link className="btn btn--box btn--outline header-cta" href={plainCta.href}>{plainCta.label}</Link> : null}
+            {/* plainCta があってもログイン状態は隠さない（/signup だけ誰でログイン中か分からなかった） */}
             {user ? (
-              !plainCta ? (
-                <>
-                  <Link className="btn btn--box btn--outline" href="/my/compare">保存・比較</Link>
-                  <form action={logoutAction}><button className="btn btn--box btn--outline" type="submit">{user.name} 様</button></form>
-                </>
-              ) : null
+              <>
+                <Link className="btn btn--box btn--outline" href="/my/compare">保存・比較</Link>
+                <form action={logoutAction}><button className="btn btn--box btn--outline" type="submit">{user.name} 様</button></form>
+              </>
             ) : (
               <Link className="btn btn--pill btn--outline" href="/login">ログイン</Link>
             )}

@@ -2,31 +2,18 @@
    MONOTE — W-09 企業登録 step2 (signup.html)
    ============================================================ */
 
-/* ---------- simple header ---------- */
-.signup-header {
-  height: var(--header-h);
-  background: var(--white);
-  border-bottom: 1px solid var(--line);
+/* ---------- header ---------- */
+/* ヘッダーは共有の <Header variant="plain">（注記＋「あとで続ける」＋ログイン状態）。
+   .header-note / .header-cta は現状このフローだけが使う。狭い画面では
+   ログイン状態（保存・比較／○○様）を優先し、注記とCTAを隠す
+   （CTAの遷移先「/」はブランドロゴと同じなので導線は失われない）。 */
+@media (max-width: 768px) {
+  .page-signup .site-header__inner { padding-inline: 16px; gap: 12px; }
+  .page-signup .site-header__actions { gap: 8px; }
+  .page-signup .site-header__actions .btn { padding: 8px 12px; font-size: 13px; }
+  .page-signup .header-note,
+  .page-signup .header-cta { display: none; }
 }
-.signup-header__inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 100%;
-  padding-inline: 40px;
-  gap: 24px;
-}
-.signup-header__right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.signup-header__note {
-  font-size: 13px;
-  letter-spacing: -0.02em;
-  color: var(--sub);
-}
-.signup-header .btn--box { font-weight: 400; letter-spacing: -0.02em; }
 
 /* ---------- intro / steps ---------- */
 .signup-intro {
@@ -292,6 +279,48 @@
 .cbx { width: 15px; height: 15px; flex: none; }
 .cbx .tick { opacity: 0; transition: opacity 0.15s ease; }
 .cbx-label input:checked ~ .cbx .tick { opacity: 1; }
+
+/* 会社の基本情報: 会社名だけ2カラムぶち抜き */
+.fld.-wide { grid-column: 1 / -1; }
+
+/* 自己申告である旨などの補足（グループ末尾の小さな注記） */
+.sg-note {
+  font-size: 13px;
+  line-height: 1.7;
+  letter-spacing: -0.01em;
+  color: var(--sub);
+}
+
+/* 保存に失敗したとき（レート制限・必須未入力）の通知 */
+.signup-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 0.5px solid var(--red);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--red) 8%, var(--white));
+  font-size: 14px;
+  line-height: 1.7;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.signup-alert__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border-radius: 50%;
+  background: var(--red);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
 
 /* ---------- textarea ---------- */
 .sg-textarea {
@@ -581,14 +610,62 @@
   margin-top: 16px;
 }
 
+/* 完了画面: 自社の検索での見え方 */
+.signup-done__check {
+  width: 100%;
+  max-width: 560px;
+  margin-top: 8px;
+  padding: 20px 24px;
+  border: 0.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  text-align: left;
+}
+.signup-done__check-ttl {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.signup-done__check-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.7;
+  letter-spacing: -0.01em;
+  color: var(--sub);
+}
+.signup-done__links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  list-style: none;
+}
+.signup-done__links a {
+  font-size: 14px;
+  line-height: 1.7;
+  letter-spacing: -0.01em;
+  color: var(--blue);
+  text-decoration: none;
+  border-bottom: 0.5px solid transparent;
+  transition: border-color 0.2s ease;
+}
+.signup-done__links a:hover { border-bottom-color: var(--blue); }
+.signup-note {
+  font-size: 13px;
+  line-height: 1.7;
+  letter-spacing: -0.01em;
+  color: var(--sub);
+}
+.signup-done__note { max-width: 560px; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 1160px) {
   .signup-cols { flex-direction: column; }
   .signup-side { width: 100%; }
 }
 @media (max-width: 768px) {
-  .signup-header__inner { padding-inline: 20px; }
-  .signup-header__note { display: none; }
   .signup-intro { margin-top: 32px; gap: 20px; }
   .signup-intro__txt h1 { font-size: 22px; line-height: 1.5; }
   .signup-intro__txt p { max-width: 30em; white-space: normal; }
@@ -612,6 +689,7 @@
   .side-card { padding: 16px; }
   .pv__name { white-space: normal; }
   .signup-done { margin-top: 64px; margin-bottom: 80px; }
+  .signup-done__check { padding: 16px; }
   .signup-done__actions { flex-direction: column; align-items: stretch; width: 100%; gap: 12px; }
   .signup-done__actions .btn { width: 100%; }
 }
