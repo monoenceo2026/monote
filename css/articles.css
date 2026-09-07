@@ -79,6 +79,7 @@
   .site-header__actions { display: none; }
 
   .articles-list { margin-top: 32px; }
+  .articles-list__ttl .sec-ttl h1,
   .articles-list__ttl .sec-ttl h2 { font-size: 24px; }
   .articles-list__ttl .btn { padding: 8px 16px; font-size: 13px; }
   .articles-grid { grid-template-columns: 1fr; gap: 16px; }

@@ -62,6 +62,13 @@ function iso(daysAgo: number) {
   return d.toISOString().replace("T", " ").slice(0, 19);
 }
 
+/** 相談の「希望納期」表記。サイト全体の日付書式 YYYY.MM.DD に合わせる */
+function deadlineIn(daysAhead: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}まで`;
+}
+
 export function runSeed(db: Database) {
   const insCond = db.prepare("INSERT OR IGNORE INTO conditions (category, label) VALUES (?, ?)");
   for (const [c, l] of CONDITIONS) insCond.run(c, l);
@@ -119,7 +126,7 @@ export function runSeed(db: Database) {
       area: "全国発送／標準 5〜10日／特急 応相談",
       price_hint: "試作 3万円〜／量産は図面ベースで個別見積",
       contact_hours: "平日9:00〜17:30／相談への返信 平均1営業日",
-      hard_conditions: "板厚6.0mm超の切断／鋳物･樹脂の加工／10,000個以上の大量量産／めっき･塗装（協力会社へ手配）",
+      hard_conditions: "板厚6.0mm超の切断／鋳物・樹脂の加工／10,000個以上の大量量産／めっき・塗装（協力会社へ手配）",
       response_days: 1, trade_terms: "初回前払／掛け取引は与信後",
       address: "大阪府八尾市○○町1-2", completeness: 72,
       confirmed: "2026-07-15 09:00:00", updated: "2026-08-05 10:00:00",
@@ -140,7 +147,7 @@ export function runSeed(db: Database) {
       sl: "1個〜500個／最短10日", sls: "試作と量産を同じ担当が通じて対応",
       sq: "ISO9001", sqs: "受入検査と出荷前の抜取検査",
       lot_min: 1, lot_max: 500, precision_mm: 0.1, delivery_min: 10, delivery_max: 14,
-      size_note: "板厚0.8〜4.0／1,200×2,400m", equipment: "プレス機5台／スポット溶接機3台",
+      size_note: "板厚0.8〜4.0mm／1,200mm×2,400mm", equipment: "プレス機5台／スポット溶接機3台",
       capacity: "月産 約8,000個", industries: "建材／産業機械",
       area: "関西中心／全国可", price_hint: "試作 2.5万円〜",
       contact_hours: "平日9:00〜18:00／相談への返信 平均3営業日",
@@ -161,7 +168,7 @@ export function runSeed(db: Database) {
       sl: "10個〜300個", sls: "小ロットの繰り返し発注に対応",
       sq: "自主検査のみ", sqs: "出荷前の自主検査",
       lot_min: 10, lot_max: 300, precision_mm: 0.1, delivery_min: 14, delivery_max: 21,
-      size_note: "板厚1.0〜3.0／1,000×2,000m", equipment: "レーザー加工機2台／ベンダー2台",
+      size_note: "板厚1.0〜3.0mm／1,000mm×2,000mm", equipment: "レーザー加工機2台／ベンダー2台",
       capacity: "月産 約3,000個", industries: "産業機械",
       area: "関西のみ", price_hint: "非公開",
       contact_hours: "平日10:00〜17:00", hard_conditions: "量産・特急対応",
@@ -438,7 +445,7 @@ export function runSeed(db: Database) {
     }
 
     /* ---------- users ---------- */
-    insUser.run("tanaka@example.co.jp", "田中", "buyer", null);
+    const buyerId = insUser.run("tanaka@example.co.jp", "田中", "buyer", null).lastInsertRowid as number;
     insUser.run("owner@marumaru.example.jp", "株式会社○○製作所", "company", marumaru);
 
     /* ---------- events for the dashboard (marumaru, W-08 numbers) ---------- */
@@ -486,19 +493,19 @@ export function runSeed(db: Database) {
 
     /* ---------- inbox: open inquiries for marumaru ---------- */
     const inq1 = db.prepare(`INSERT INTO inquiries
-      (type, process, material, quantity, deadline, note, anonymous, contact_company, contact_name, contact_email, source, created_at)
-      VALUES ('estimate','板金・レーザー切断／曲げ','ステンレス SUS304（t1.5）','20個（試作）','2026年8月25日まで','現行品の曲げ割れを改善したく、Rの指定から相談したいです。',1,'株式会社△△','田中','tanaka@example.co.jp','search', ?)`)
-      .run(iso(1)).lastInsertRowid as number;
+      (type, process, material, quantity, deadline, note, anonymous, contact_company, contact_name, contact_email, source, created_by, created_at)
+      VALUES ('estimate','板金・レーザー切断／曲げ','ステンレス SUS304（t1.5）','20個（試作）',?,'現行品の曲げ割れを改善したく、Rの指定から相談したいです。',1,'株式会社△△','田中','tanaka@example.co.jp','search', ?, ?)`)
+      .run(deadlineIn(14), buyerId, iso(1)).lastInsertRowid as number;
     db.prepare("INSERT INTO inquiry_recipients (inquiry_id, company_id, status) VALUES (?, ?, 'open')").run(inq1, marumaru);
     const inq2 = db.prepare(`INSERT INTO inquiries
-      (type, process, material, quantity, deadline, note, anonymous, contact_company, contact_name, contact_email, source, created_at)
-      VALUES ('technical','曲げ・ベンダー','ステンレス SUS304','','','技術相談：曲げRの指定について',1,'株式会社△△','田中','tanaka@example.co.jp','article', ?)`)
-      .run(iso(3)).lastInsertRowid as number;
+      (type, process, material, quantity, deadline, note, anonymous, contact_company, contact_name, contact_email, source, created_by, created_at)
+      VALUES ('technical','曲げ・ベンダー','ステンレス SUS304','','','技術相談：曲げRの指定について',1,'株式会社△△','田中','tanaka@example.co.jp','article', ?, ?)`)
+      .run(buyerId, iso(3)).lastInsertRowid as number;
     db.prepare("INSERT INTO inquiry_recipients (inquiry_id, company_id, status) VALUES (?, ?, 'open')").run(inq2, marumaru);
     for (let i = 0; i < 5; i++) {
-      const id = db.prepare(`INSERT INTO inquiries (type, process, material, quantity, note, anonymous, contact_company, contact_name, contact_email, source, created_at)
-        VALUES ('estimate','板金','SUS304','${(i + 1) * 10}個','過去の相談（返信済み）',1,'株式会社△△','田中','tanaka@example.co.jp','search', ?)`)
-        .run(iso(6 + i * 5)).lastInsertRowid as number;
+      const id = db.prepare(`INSERT INTO inquiries (type, process, material, quantity, note, anonymous, contact_company, contact_name, contact_email, source, created_by, created_at)
+        VALUES ('estimate','板金','SUS304','${(i + 1) * 10}個','過去の相談（返信済み）',1,'株式会社△△','田中','tanaka@example.co.jp','search', ?, ?)`)
+        .run(buyerId, iso(6 + i * 5)).lastInsertRowid as number;
       db.prepare("INSERT INTO inquiry_recipients (inquiry_id, company_id, status) VALUES (?, ?, 'replied')").run(id, marumaru);
     }
 

@@ -11,7 +11,7 @@ export default function ContactPage() {
   return (
     <>
       <Header variant="plain" />
-      <main className="doc">
+      <main id="main" tabIndex={-1} className="doc">
         <p className="doc__lead-label">MONOTE</p>
         <h1>お問い合わせ</h1>
         <p className="doc__lead">

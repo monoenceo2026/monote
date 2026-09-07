@@ -15,7 +15,7 @@ export default function AboutPage() {
   return (
     <>
       <Header variant="plain" />
-      <main className="doc">
+      <main id="main" tabIndex={-1} className="doc">
         <p className="doc__lead-label">ABOUT</p>
         <h1>技術情報が、選定・比較・相談に<br />使われる状態をつくる</h1>
         <p className="doc__lead">

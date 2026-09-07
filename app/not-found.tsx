@@ -8,7 +8,7 @@ export default function NotFound() {
   return (
     <>
       <Header variant="plain" />
-      <main className="sys-page">
+      <main id="main" tabIndex={-1} className="sys-page">
         <p className="sys-page__code-lg">404</p>
         <h1 className="sys-page__title">お探しのページは見つかりませんでした</h1>
         <p className="sys-page__lead">

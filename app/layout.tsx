@@ -48,6 +48,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
+        {/* キーボード利用者がヘッダー・サイドバーを飛ばして本文へ入れるようにする */}
+        <a className="skip-link" href="#main">本文へスキップ</a>
         {children}
         <RevealFx />
       </body>

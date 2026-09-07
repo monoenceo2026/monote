@@ -116,7 +116,7 @@ export default async function CompanyPage({
         </div>
       </div>
 
-      <main>
+      <main id="main" tabIndex={-1}>
         {/* ==================== 企業ヘッダー ==================== */}
         <div className="co-head container-wide">
           <div className="co-head__info">

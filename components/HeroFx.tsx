@@ -29,22 +29,31 @@ export default function HeroFx() {
       requestAnimationFrame(reveal);
     }
 
-    /* mobile placeholder (per SP design) */
-    const heroInput = document.querySelector<HTMLInputElement>(".hero__search-input");
-    if (heroInput && window.matchMedia("(max-width: 768px)").matches) {
-      heroInput.placeholder = "例：SUS304の薄板 小ロット";
+    /* mobile wording (per SP design) */
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      const heroInput = document.querySelector<HTMLInputElement>(".hero__search-input");
+      if (heroInput) heroInput.placeholder = "例：SUS304の薄板 小ロット";
+      const heroBtn = document.querySelector<HTMLButtonElement>(".hero__search-btn");
+      if (heroBtn) heroBtn.textContent = "検索する";
     }
 
     /* sp menu */
     const menuBtn = document.querySelector<HTMLButtonElement>(".menu-btn");
     const spMenu = document.querySelector<HTMLElement>(".sp-menu");
-    const onMenu = () => {
+    const setMenu = (open: boolean) => {
       if (!menuBtn || !spMenu) return;
-      const open = spMenu.hidden;
       spMenu.hidden = !open;
       menuBtn.setAttribute("aria-expanded", String(open));
     };
+    const onMenu = () => setMenu(!!spMenu?.hidden);
+    /* Escapeで閉じてハンバーガーへフォーカスを戻す（開いたら戻れないと詰む） */
+    const onMenuKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || !spMenu || spMenu.hidden) return;
+      setMenu(false);
+      menuBtn?.focus();
+    };
     menuBtn?.addEventListener("click", onMenu);
+    document.addEventListener("keydown", onMenuKey);
 
     /* marquee: duplicate track once for a seamless loop */
     const track = document.querySelector<HTMLElement>(".hero__logos-track");
@@ -200,6 +209,7 @@ export default function HeroFx() {
       cleanupMotion();
       window.removeEventListener("monote:intro-done", reveal);
       menuBtn?.removeEventListener("click", onMenu);
+      document.removeEventListener("keydown", onMenuKey);
       carousel?.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointermove", onMovePtr);
       window.removeEventListener("pointerup", onUp);

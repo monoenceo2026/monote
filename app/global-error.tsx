@@ -4,10 +4,10 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
   return (
     <html lang="ja">
       <body style={{ margin: 0, fontFamily: "system-ui, sans-serif", color: "#48494c", background: "#fff" }}>
-        <main style={{ maxWidth: 640, margin: "0 auto", padding: "120px 20px", textAlign: "center" }} role="alert">
+        <main id="main" tabIndex={-1} style={{ maxWidth: 640, margin: "0 auto", padding: "120px 20px", textAlign: "center" }} role="alert">
           <p style={{ fontFamily: "'Times New Roman', serif", fontSize: 22, letterSpacing: "-0.06em", color: "#181c1f" }}>MONOTE</p>
           <h1 style={{ fontSize: 24, margin: "24px 0 12px", color: "#181c1f" }}>ページを表示できませんでした</h1>
-          <p style={{ fontSize: 14, lineHeight: 1.8, color: "#737373" }}>
+          <p style={{ fontSize: 14, lineHeight: 1.8, color: "#6b6b6b" }}>
             一時的な問題が起きた可能性があります。もう一度お試しください。
           </p>
           <button
@@ -16,7 +16,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           >
             再読み込み
           </button>
-          {error.digest ? <p style={{ marginTop: 24, fontSize: 12, color: "#737373" }}>エラーコード：{error.digest}</p> : null}
+          {error.digest ? <p style={{ marginTop: 24, fontSize: 12, color: "#6b6b6b" }}>エラーコード：{error.digest}</p> : null}
         </main>
       </body>
     </html>

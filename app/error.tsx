@@ -9,7 +9,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   }, [error]);
 
   return (
-    <main className="sys-page" role="alert">
+    <main id="main" tabIndex={-1} className="sys-page" role="alert">
       <p className="sys-page__brand">MONOTE</p>
       <h1 className="sys-page__title">ページを表示できませんでした</h1>
       <p className="sys-page__lead">

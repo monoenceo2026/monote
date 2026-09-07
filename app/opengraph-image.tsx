@@ -53,7 +53,7 @@ export default function OpengraphImage() {
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, color: "#737373" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, color: "#6b6b6b" }}>
           <div>製造業特化型 情報発信プラットフォーム</div>
           <div>運営：株式会社モノエン</div>
         </div>

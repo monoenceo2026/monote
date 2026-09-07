@@ -18,7 +18,7 @@ export default async function LoginPage({
   return (
     <>
       <Header variant="plain" />
-      <main className="login container-wide">
+      <main id="main" tabIndex={-1} className="login container-wide">
         <h1 className="login__title">ログイン</h1>
         <p className="login__lead">
           β版のデモ環境です。デモアカウントを選んでログインすると、保存・比較・相談・企業管理まで一通り試せます。

@@ -80,7 +80,7 @@ export default function FeaturesPage() {
   return (
     <>
       <Header variant="sub" active="features" />
-      <main className="feat">
+      <main id="main" tabIndex={-1} className="feat">
         <div className="feat__head">
           <p className="feat__label">FEATURES</p>
           <h1 className="feat__title">特集</h1>

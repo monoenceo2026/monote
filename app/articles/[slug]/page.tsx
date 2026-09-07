@@ -53,8 +53,8 @@ function parseSections(body: string): Section[] {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const article = articleBySlug(slug);
-  if (!article) return { title: "記事が見つかりません | MONOTE" };
-  return { title: `${article.title} | MONOTE`, description: article.excerpt };
+  if (!article) return { title: "記事が見つかりません" };
+  return { title: article.title, description: article.excerpt };
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -120,7 +120,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         </nav>
       </div>
 
-      <main>
+      <main id="main" tabIndex={-1}>
         <div className="article-layout container-wide">
 
           <article className="article-main">

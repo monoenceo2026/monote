@@ -70,7 +70,7 @@ export default async function TopPage() {
         </nav>
       </div>
 
-      <main>
+      <main id="main" tabIndex={-1}>
         {/* ==================== FV / hero ==================== */}
         <section className="hero">
           <div className="hero__motion" aria-hidden="true">
