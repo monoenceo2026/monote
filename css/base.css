@@ -315,16 +315,25 @@ button { cursor: pointer; }
   line-height: 1.2;
 }
 
-/* ---------- scroll reveal ---------- */
+/* ---------- scroll reveal ----------
+   初期状態を隠すのは JS が動く環境だけ。加えて、スクリプトの読み込みに
+   失敗して .fx-ready が付かなかった場合は失効タイマーで強制表示する
+   （真っ白な画面のままにするより、演出を捨てて中身を出す）。 */
 .reveal {
+  opacity: 1;
+  transform: none;
+}
+.js .reveal {
   opacity: 0;
   transform: translateY(28px);
   transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
   transition-delay: var(--reveal-delay, 0s);
 }
-.reveal.is-inview { opacity: 1; transform: none; }
+.js .reveal.is-inview { opacity: 1; transform: none; }
+@keyframes fx-failsafe { to { opacity: 1; transform: none; } }
+.js:not(.fx-ready) .reveal { animation: fx-failsafe 0.01s linear 3s forwards; }
 @media (prefers-reduced-motion: reduce) {
-  .reveal { opacity: 1; transform: none; transition: none; }
+  .reveal, .js .reveal { opacity: 1; transform: none; transition: none; animation: none; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
 

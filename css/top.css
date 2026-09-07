@@ -34,6 +34,24 @@ html[data-intro-off] .intro { display: none; }
   transition: color 0.25s ease;
 }
 .intro__skip:hover { color: var(--ink); }
+
+/* ---------- 登場演出のフォールバック ----------
+   ヒーローは JS が .is-loaded を付けるまで opacity:0 で待つ作りなので、
+   スクリプトが読めなかった場合にファーストビューが真っ白になる。
+   (1) JSが無い環境では最初から見えた状態にする
+   (2) JSはあるのにチャンクが落ちて .fx-ready が付かないときは3秒で強制表示する */
+html:not(.js) .hero-metal,
+html:not(.js) .hero__lead,
+html:not(.js) .hero__search,
+html:not(.js) .hero__tags { opacity: 1; transform: none; }
+html:not(.js) .hero__title-line > span { transform: none; }
+
+.js:not(.fx-ready) .hero-metal,
+.js:not(.fx-ready) .hero__lead,
+.js:not(.fx-ready) .hero__search,
+.js:not(.fx-ready) .hero__tags,
+.js:not(.fx-ready) .hero__title-line > span { animation: fx-failsafe 0.01s linear 3s forwards; }
+
 @media (max-width: 768px) {
   .intro__video { height: auto; width: min(78vw, 340px); }
 }
@@ -73,7 +91,7 @@ html[data-intro-off] .intro { display: none; }
   transform: translateY(24px) rotate(6deg);
   z-index: 4;
 }
-.is-loaded .hero-metal { opacity: 1; transform: none; }
+.js .is-loaded .hero-metal { opacity: 1; transform: none; }
 
 .hero__body {
   position: relative;
@@ -103,7 +121,7 @@ html[data-intro-off] .intro { display: none; }
   transform: translateY(110%);
   transition: transform 1.1s var(--ease-out) 0.1s;
 }
-.is-loaded .hero__title-line > span { transform: none; }
+.js .is-loaded .hero__title-line > span { transform: none; }
 
 .hero__lead {
   margin-top: 16px;
@@ -114,7 +132,7 @@ html[data-intro-off] .intro { display: none; }
   transform: translateY(16px);
   transition: opacity 0.9s ease 0.45s, transform 0.9s var(--ease-out) 0.45s;
 }
-.is-loaded .hero__lead { opacity: 1; transform: none; }
+.js .is-loaded .hero__lead { opacity: 1; transform: none; }
 
 .hero__search {
   margin-top: 40px;
@@ -126,7 +144,7 @@ html[data-intro-off] .intro { display: none; }
   transform: translateY(16px);
   transition: opacity 0.9s ease 0.6s, transform 0.9s var(--ease-out) 0.6s;
 }
-.is-loaded .hero__search { opacity: 1; transform: none; }
+.js .is-loaded .hero__search { opacity: 1; transform: none; }
 .hero__search-input {
   flex: 1;
   height: 56px;
@@ -167,7 +185,7 @@ html[data-intro-off] .intro { display: none; }
   transform: translateY(16px);
   transition: opacity 0.9s ease 0.72s, transform 0.9s var(--ease-out) 0.72s;
 }
-.is-loaded .hero__tags { opacity: 1; transform: none; }
+.js .is-loaded .hero__tags { opacity: 1; transform: none; }
 .hero__tags-label {
   font-size: 12px;
   letter-spacing: 0.03em;
@@ -588,7 +606,7 @@ main { padding-bottom: 80px; }
   .hero__tags-label { display: none; }
   .hero__tags-list { flex-wrap: wrap; justify-content: center; }
   .hero__tags .chip:nth-child(n+5) { display: none; }
-  .hero-metal--tl { left: -40px; top: -20px; width: 150px; height: 187px; }
+  .hero-metal--tl { left: -52px; top: -66px; width: 140px; height: 174px; opacity: 0.9; }
   .hero-metal--r { right: -30px; top: auto; bottom: -30px; width: 130px; height: 161px; }
   .hero__logos { height: 72px; }
   .hero__logos-track { gap: 40px; padding-left: 40px; }
@@ -605,12 +623,27 @@ main { padding-bottom: 80px; }
     aspect-ratio: 533 / 671;
   }
   .pick__title { font-size: 26px; }
-  .pick__carousel { margin-top: 32px; scroll-padding-inline: 20px; }
-  .pick__track { padding-inline: 20px; gap: 16px; }
-  .pick-card { width: 300px; height: 200px; }
-  .pick-card h3 { font-size: 20px; top: 24px; }
-  .pick-card p { top: 62px; font-size: 13px; }
-  .pick-card__arrow { top: 152px; }
+  .pick__carousel { margin-top: 32px; overflow-x: visible; cursor: default; scroll-snap-type: none; }
+  .pick__track {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding-inline: 20px;
+    width: 100%;
+  }
+  .pick-card { width: auto; height: 168px; }
+  .pick-card::before { background: linear-gradient(to left, rgba(255, 255, 255, 0), #fff 92%); }
+  .pick-card h3 { font-size: 17px; top: 20px; left: 12px; }
+  .pick-card p {
+    top: 50px;
+    left: 12px;
+    right: 12px;
+    width: auto !important;
+    font-size: 11px;
+    line-height: 1.5;
+    white-space: normal;
+  }
+  .pick-card__arrow { top: 126px; left: 12px; width: 20px; height: 20px; }
 
   .read2 { padding-top: 88px; padding-bottom: 40px; }
   .read2__blob {

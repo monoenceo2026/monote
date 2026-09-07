@@ -8,6 +8,10 @@ export default function RevealFx() {
   const pathname = usePathname();
 
   useEffect(() => {
+    /* 登場演出のJSが動いたことを知らせる。これが付かないと
+       css/base.css の失効タイマーが働いて本文を強制表示する */
+    document.documentElement.classList.add("fx-ready");
+
     document.querySelectorAll<HTMLElement>("[data-stagger]").forEach((group) => {
       const step = parseFloat(group.dataset.stagger || "0.08");
       Array.from(group.children).forEach((child, i) => {

@@ -27,7 +27,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja">
+    /* head のインラインスクリプトが <html> に data-intro-off / js を足すため、
+       サーバー出力との差分でハイドレーション警告が出る。ここだけ抑止する */
+    <html lang="ja" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -46,6 +48,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               "(function(){var l=document.getElementById('gf');if(!l)return;var on=function(){l.media='all'};l.addEventListener('load',on);setTimeout(on,2000);})();",
           }}
         />
+        {/*
+          登場アニメーションの初期状態（opacity:0）は、この js クラスが付いている
+          ときだけ適用する。JSが全く動かない環境では最初から見えたままになる。
+          さらに css/base.css の失効タイマーが、スクリプトの読み込みに失敗して
+          .fx-ready が付かなかった場合に本文を強制的に表示する。
+        */}
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.className+=' js';" }} />
       </head>
       <body>
         {/* キーボード利用者がヘッダー・サイドバーを飛ばして本文へ入れるようにする */}
