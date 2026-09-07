@@ -57,3 +57,25 @@ export function articleSlugsOf(companyId: number): Map<number, string> {
 export function worksCountOf(companyId: number): number {
   return (db().prepare("SELECT COUNT(*) n FROM works WHERE company_id = ?").get(companyId) as { n: number }).n;
 }
+
+/* ---------------- 実績（works）の最小限の編集 ----------------
+   ダッシュボードの「実績を追加する」導線の実書き込み。
+   repo.ts に works の書き込みAPIが無いのでここに置く。 */
+
+export const WORK_TITLE_MAX = 60;
+export const WORK_SPEC_MAX = 120;
+
+/** 実績を1件追加して id を返す（本文は上限で切り詰め） */
+export function addWork(companyId: number, title: string, spec: string): number {
+  const t = title.replace(/\s+/g, " ").trim().slice(0, WORK_TITLE_MAX);
+  const s = spec.replace(/\s+/g, " ").trim().slice(0, WORK_SPEC_MAX);
+  if (!t) return 0;
+  return db()
+    .prepare("INSERT INTO works (company_id, title, spec) VALUES (?,?,?)")
+    .run(companyId, t, s).lastInsertRowid as number;
+}
+
+/** 自社の実績だけを削除できる（company_id 条件付き） */
+export function deleteWork(companyId: number, workId: number): boolean {
+  return db().prepare("DELETE FROM works WHERE id = ? AND company_id = ?").run(workId, companyId).changes > 0;
+}

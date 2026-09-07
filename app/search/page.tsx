@@ -32,6 +32,7 @@ import {
   RevealOnParams,
   SaveButton,
   SaveSearchButton,
+  SpFilterPanel,
 } from "./parts";
 import "@/css/search.css";
 
@@ -165,6 +166,41 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     .sort((a, b) => CAT_ORDER.indexOf(a.category) - CAT_ORDER.indexOf(b.category) || a.id - b.id);
   const condWithout = (id: number) => conditionIds.filter((c) => c !== id).join(",");
 
+  /* 現在の検索条件を保ったままの URL（page / cond / q を差し替えられる） */
+  const urlWith = (over: { page?: number; cond?: string; q?: string | null }) => {
+    const p = new URLSearchParams();
+    const kw = over.q === undefined ? q : over.q;
+    if (kw) p.set("q", kw);
+    p.set("cond", over.cond === undefined ? conditionIds.join(",") : over.cond);
+    if (tab !== "companies") p.set("tab", tab);
+    if (sort !== "match") p.set("sort", sort);
+    const pg = over.page ?? 1;
+    if (pg > 1) p.set("page", String(pg));
+    return "/search?" + p.toString();
+  };
+
+  /* 0件のとき: 適用中の条件を1つずつ外したら何社になるかを出して、そのまま外せるようにする */
+  const dropSuggests: Array<{ key: string; label: string; count: number; href: string }> = [];
+  if (total === 0) {
+    if (keyword) {
+      const n = searchCompanies({ conditionIds, sort: "match" }).length;
+      if (n > 0) dropSuggests.push({ key: "q", label: `キーワード「${keyword}」`, count: n, href: urlWith({ q: null }) });
+    }
+    for (const c of applied) {
+      const ids = conditionIds.filter((i) => i !== c.id);
+      const n = searchCompanies({ ...filters, conditionIds: ids }).length;
+      if (n > 0) {
+        dropSuggests.push({
+          key: `c${c.id}`,
+          label: `「${CAT_LABEL[c.category] ?? c.category}：${shortLabel(c)}」`,
+          count: n,
+          href: urlWith({ cond: ids.join(",") }),
+        });
+      }
+    }
+    dropSuggests.sort((a, b) => b.count - a.count);
+  }
+
   /* 緩和サジェスト: delivery 条件を外した場合の件数 */
   const deliveryCond = applied.find((c) => c.category === "delivery");
   const suggest = deliveryCond
@@ -241,16 +277,63 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   };
 
   const pagerPages = Array.from({ length: pageCount }, (_, i) => i + 1);
-  const urlWith = (over: { page?: number }) => {
-    const p = new URLSearchParams();
-    if (q) p.set("q", q);
-    p.set("cond", conditionIds.join(","));
-    if (tab !== "companies") p.set("tab", tab);
-    if (sort !== "match") p.set("sort", sort);
-    const pg = over.page ?? 1;
-    if (pg > 1) p.set("page", String(pg));
-    return "/search?" + p.toString();
-  };
+
+  /* ---------------- 絞り込み項目（PCサイドバー / SPドロワーで共用） ---------------- */
+  const filterFields = (
+    <>
+      <Collapsible title="加工・工程">
+        {processVisible.map((c) => renderCk(c, true))}
+        <FMore count={processMore.length}>{processMore.map((c) => renderCk(c, true))}</FMore>
+      </Collapsible>
+
+      <hr className="f-line" />
+
+      <section className="f-group" data-collapsible="">
+        <div className="f-group__head">
+          <h2>材質</h2>
+          <span className="tag tag--blue">重要度1位</span>
+        </div>
+        <div className="f-group__body">{group("material").map((c) => renderCk(c, true))}</div>
+      </section>
+
+      <hr className="f-line" />
+
+      <section className="f-group" data-collapsible="">
+        <div className="f-group__head">
+          <h2>対応ロット</h2>
+          <span className="tag tag--blue">重要度1位</span>
+        </div>
+        <div className="f-group__body">{group("lot").map((c) => renderCk(c, false))}</div>
+      </section>
+
+      <hr className="f-line" />
+
+      <Collapsible title="納期">{group("delivery").map((c) => renderCk(c, true))}</Collapsible>
+
+      <hr className="f-line" />
+
+      <Collapsible title="品質・認証">{group("cert").map((c) => renderCk(c, true))}</Collapsible>
+
+      <hr className="f-line" />
+
+      <Collapsible title="エリア">{group("area").map((c) => renderCk(c, true))}</Collapsible>
+
+      <hr className="f-line" />
+
+      <Collapsible title="加工精度">{group("precision").map((c) => renderCk(c, true))}</Collapsible>
+
+      <hr className="f-line" />
+
+      <section className="f-meta">
+        <p className="f-meta__ttl">今後追加予定の絞り込み</p>
+        <div className="f-meta__row"><p>実績のある業種・用途</p><span>自動車 / 半導体 / 医療…</span></div>
+        <div className="f-meta__row"><p>価格帯の目安</p><span>単価 / ロット別の目安…</span></div>
+        <div className="f-meta__row"><p>返信の早さ</p><span>1営業日以内 / 3営業日以内…</span></div>
+        <div className="f-meta__row"><p>対応サイズ</p><span>最大寸法・板厚…</span></div>
+        <div className="f-meta__row"><p>保有設備・生産能力</p><span>設備名で検索…</span></div>
+      </section>
+    </>
+  );
 
   /* ---------------- パネル: 企業 ---------------- */
   const panelCompanies = (
@@ -349,7 +432,29 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       ))}
 
       {total === 0 ? (
-        <p className="results-empty">条件に一致する企業が見つかりませんでした。条件を減らしてお試しください。</p>
+        <div className="empty">
+          <p className="empty__ttl">条件に一致する企業がありません</p>
+          {dropSuggests.length ? (
+            <>
+              <p className="empty__lead">条件を1つ外すと、次の企業が見つかります。</p>
+              <ul className="empty__list">
+                {dropSuggests.map((sgt) => (
+                  <li key={sgt.key}>
+                    <Link className="empty__item" href={sgt.href}>
+                      <span className="empty__item-l">{sgt.label}を外す</span>
+                      <span className="empty__item-n">{sgt.count}社</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="empty__lead">キーワードを短くするか、条件を減らしてお試しください。</p>
+          )}
+          <NavButton className="btn btn--pill btn--outline empty__reset" mutate={{ cond: "", q: null, page: null }}>
+            すべての条件を解除
+          </NavButton>
+        </div>
       ) : (
         <article className="c-card c-card--skeleton" aria-hidden="true">
           <div className="c-card__main">
@@ -369,9 +474,15 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
 
       {pageCount > 1 ? (
         <nav className="pager" aria-label="ページネーション">
-          <Link className="pager__item pager__item--arrow" href={urlWith({ page: Math.max(1, page - 1) })} aria-label="前のページ">
-            <svg viewBox="0 0 8 16" width="8" height="16" fill="none"><path d="M6 2 2 8l4 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </Link>
+          {page <= 1 ? (
+            <span className="pager__item pager__item--arrow is-disabled" aria-disabled="true" aria-label="前のページ">
+              <svg viewBox="0 0 8 16" width="8" height="16" fill="none"><path d="M6 2 2 8l4 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </span>
+          ) : (
+            <Link className="pager__item pager__item--arrow" href={urlWith({ page: page - 1 })} aria-label="前のページ">
+              <svg viewBox="0 0 8 16" width="8" height="16" fill="none"><path d="M6 2 2 8l4 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </Link>
+          )}
           {pagerPages.map((p) => (
             <Link
               key={p}
@@ -382,9 +493,15 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
               {p}
             </Link>
           ))}
-          <Link className="pager__item pager__item--arrow" href={urlWith({ page: Math.min(pageCount, page + 1) })} aria-label="次のページ">
-            <svg viewBox="0 0 8 16" width="8" height="16" fill="none"><path d="M2 2l4 6-4 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </Link>
+          {page >= pageCount ? (
+            <span className="pager__item pager__item--arrow is-disabled" aria-disabled="true" aria-label="次のページ">
+              <svg viewBox="0 0 8 16" width="8" height="16" fill="none"><path d="M2 2l4 6-4 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </span>
+          ) : (
+            <Link className="pager__item pager__item--arrow" href={urlWith({ page: page + 1 })} aria-label="次のページ">
+              <svg viewBox="0 0 8 16" width="8" height="16" fill="none"><path d="M2 2l4 6-4 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </Link>
+          )}
         </nav>
       ) : null}
     </>
@@ -396,7 +513,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       {articles.length ? (
         articles.slice(0, 30).map((a) => (
           <Link key={a.id} className="a-row" href={`/articles/${a.slug}`}>
-            <div className="ph-thumb a-row__thumb"><span>記事サムネイル</span></div>
+            {a.thumb ? (
+              <img className="a-row__photo" src={a.thumb} alt="" loading="lazy" decoding="async" />
+            ) : (
+              <div className="ph-thumb a-row__thumb"><span>記事サムネイル</span></div>
+            )}
             <div className="a-row__body">
               <div className="a-row__tags">
                 {a.tag1 ? <span className="tag">{a.tag1}</span> : null}
@@ -447,12 +568,16 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         </div>
       </header>
 
+      <h1 className="sr-only">
+        検索結果{q ? `：${q}` : ""}（企業{total}社・記事{articles.length}本）
+      </h1>
+
       {/* ==================== 適用中の条件 ==================== */}
       <div className="cond-bar">
         <div className="cond-bar__inner">
           <div className="cond-bar__left">
             <p className="cond-bar__label">適用中の条件</p>
-            <button className="sp-filter-btn" type="button">絞り込み <span id="spCondCount">{applied.length}</span></button>
+            <SpFilterPanel condCount={applied.length} resultCount={total}>{filterFields}</SpFilterPanel>
             <div className="cond-bar__chips" id="condChips">
               {applied.map((c) => (
                 <CondChip key={c.id} cat={CAT_LABEL[c.category] ?? c.category} label={shortLabel(c)} condAfter={condWithout(c.id)} />
@@ -469,52 +594,15 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         {/* ==================== 絞り込みサイドバー ==================== */}
         <aside className="sidebar">
           <div className="sidebar__head">
-            <h1>絞り込む</h1>
+            <h2>絞り込む</h2>
             <NavButton className="sidebar__clear" mutate={{ cond: "", page: null }}>条件をクリア</NavButton>
           </div>
 
-          <Collapsible title="加工・工程">
-            {processVisible.map((c) => renderCk(c, true))}
-            <FMore count={processMore.length}>{processMore.map((c) => renderCk(c, true))}</FMore>
-          </Collapsible>
-
-          <hr className="f-line" />
-
-          <section className="f-group" data-collapsible="">
-            <div className="f-group__head">
-              <h2>材質</h2>
-              <span className="tag tag--blue">重要度1位</span>
-            </div>
-            <div className="f-group__body">{group("material").map((c) => renderCk(c, true))}</div>
-          </section>
-
-          <hr className="f-line" />
-
-          <section className="f-group" data-collapsible="">
-            <div className="f-group__head">
-              <h2>対応ロット</h2>
-              <span className="tag tag--blue">重要度1位</span>
-            </div>
-            <div className="f-group__body">{group("lot").map((c) => renderCk(c, false))}</div>
-          </section>
-
-          <hr className="f-line" />
-
-          <section className="f-meta">
-            <div className="f-meta__row"><p>品質・認証</p><span>ISO9001 / IATF / 検査体制…</span></div>
-            <div className="f-meta__row"><p>実績のある業種・用途</p><span>自動車 / 半導体 / 医療…</span></div>
-            <div className="f-meta__row"><p>納期・短納期対応</p><span>7日以内 / 応相談…</span></div>
-            <div className="f-meta__row"><p>エリア</p><span>関西 / 関東 / 全国対応…</span></div>
-            <div className="f-meta__row"><p>価格帯の目安</p><span className="tag tag--blue">要追加</span></div>
-            <div className="f-meta__row"><p>返信の早さ</p><span className="tag tag--blue">要追加</span></div>
-            <div className="f-meta__row"><p>加工精度</p><span>±0.1 / ±0.05 / ±0.01mm</span></div>
-            <div className="f-meta__row"><p>対応サイズ</p><span>最大寸法・板厚</span></div>
-            <div className="f-meta__row"><p>保有設備・生産能力</p><span>設備名で検索</span></div>
-          </section>
+          {filterFields}
         </aside>
 
         {/* ==================== 検索結果 ==================== */}
-        <div className="results">
+        <main className="results" id="main" tabIndex={-1}>
           <Results
             initialTab={tab}
             companyCount={total}
@@ -523,7 +611,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
             panelCompanies={panelCompanies}
             panelArticles={panelArticles}
           />
-        </div>
+        </main>
       </div>
 
       {/* ==================== 比較バー ==================== */}

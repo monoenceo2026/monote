@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, type KeyboardEvent, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { addCompareAction, removeCompareAction, toggleSaveAction } from "@/app/actions";
 
@@ -68,6 +68,150 @@ export function CondChip({ cat, label, condAfter }: { cat: string; label: string
         <XIcon />
       </button>
     </span>
+  );
+}
+
+/* ============================================================
+   SP 用ボトムシート（絞り込み / 並び替え）
+   閉じる: ×ボタン / 背景クリック / Esc、開いている間は背面をスクロールさせない
+   ============================================================ */
+
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+export function Sheet({
+  title,
+  onClose,
+  foot,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  foot?: ReactNode;
+  children: ReactNode;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    /* PC 幅へ戻したときシートは表示されなくなるので、開きっぱなし（スクロール固定）を防ぐ */
+    const onResize = () => {
+      if (window.innerWidth > 900) onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    panelRef.current?.focus();
+  }, []);
+
+  /* フォーカスをシート内に閉じ込める */
+  const trap = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Tab") return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || active === panel)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  return (
+    <div className="sheet">
+      <button className="sheet__backdrop" type="button" tabIndex={-1} aria-hidden="true" onClick={onClose} />
+      <div
+        className="sheet__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabIndex={-1}
+        ref={panelRef}
+        onKeyDown={trap}
+      >
+        <div className="sheet__head">
+          <p className="sheet__ttl">{title}</p>
+          <button className="sheet__close" type="button" aria-label="閉じる" onClick={onClose}>
+            <XIcon />
+          </button>
+        </div>
+        <div className="sheet__body">{children}</div>
+        {foot ? <div className="sheet__foot">{foot}</div> : null}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- SP: 絞り込みドロワー（サイドバーと同じ内容） ---------- */
+
+export function SpFilterPanel({
+  condCount,
+  resultCount,
+  children,
+}: {
+  condCount: number;
+  resultCount: number;
+  children: ReactNode;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  /* 閉じたらフォーカスを開いたボタンへ戻す */
+  const close = useCallback(() => {
+    setOpen(false);
+    btnRef.current?.focus();
+  }, []);
+  return (
+    <>
+      <button
+        className="sp-filter-btn"
+        type="button"
+        ref={btnRef}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+      >
+        絞り込み <span id="spCondCount">{condCount}</span>
+      </button>
+      {open ? (
+        <Sheet
+          title="絞り込む"
+          onClose={close}
+          foot={
+            <>
+              <button
+                className="sheet__clear"
+                type="button"
+                onClick={() => navigateWith(router, { cond: "", page: null })}
+              >
+                条件をクリア
+              </button>
+              <button className="sheet__apply" type="button" onClick={close}>
+                {resultCount}社の結果を見る
+              </button>
+            </>
+          }
+        >
+          <div className="sheet__filters">{children}</div>
+        </Sheet>
+      ) : null}
+    </>
   );
 }
 
@@ -139,6 +283,11 @@ export function CondCheckbox({
 /* ---------- タブ + 並び替え + パネル ---------- */
 
 const SORT_SP_LABEL: Record<string, string> = { match: "一致度順", updated: "更新順", response: "返信順" };
+const SORT_OPTIONS: Array<[string, string]> = [
+  ["match", "条件の一致度が高い順"],
+  ["updated", "更新が新しい順"],
+  ["response", "返信が早い順"],
+];
 
 export function Results({
   initialTab,
@@ -158,6 +307,35 @@ export function Results({
   const router = useRouter();
   const [tab, setTab] = useState<"companies" | "articles">(initialTab);
   useEffect(() => setTab(initialTab), [initialTab]);
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortBtnRef = useRef<HTMLButtonElement>(null);
+  const closeSort = useCallback(() => {
+    setSortOpen(false);
+    sortBtnRef.current?.focus();
+  }, []);
+  const applySort = (v: string) => {
+    closeSort();
+    navigateWith(router, { sort: v === "match" ? null : v, page: null });
+  };
+
+  const tabRefs = {
+    companies: useRef<HTMLButtonElement>(null),
+    articles: useRef<HTMLButtonElement>(null),
+  };
+
+  /* ← → Home End でタブを移動（ARIA tab パターン） */
+  const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    const order: Array<"companies" | "articles"> = ["companies", "articles"];
+    let next: "companies" | "articles" | null = null;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = order[(order.indexOf(tab) + 1) % order.length];
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = order[(order.indexOf(tab) + order.length - 1) % order.length];
+    else if (e.key === "Home") next = order[0];
+    else if (e.key === "End") next = order[order.length - 1];
+    if (!next) return;
+    e.preventDefault();
+    select(next);
+    tabRefs[next].current?.focus();
+  };
 
   const select = (t: "companies" | "articles") => {
     setTab(t);
@@ -171,13 +349,16 @@ export function Results({
   return (
     <>
       <div className="results__head">
-        <div className="tabs" role="tablist">
+        <div className="tabs" role="tablist" aria-label="検索結果の種類" onKeyDown={onTabKey}>
           <button
             className={"tab" + (tab === "companies" ? " is-active" : "")}
             id="tabCompanies"
             type="button"
             role="tab"
+            ref={tabRefs.companies}
             aria-selected={tab === "companies"}
+            aria-controls="panelCompanies"
+            tabIndex={tab === "companies" ? 0 : -1}
             onClick={() => select("companies")}
           >
             企業　<span className="tab__count" id="companyCount">{companyCount}</span>
@@ -187,7 +368,10 @@ export function Results({
             id="tabArticles"
             type="button"
             role="tab"
+            ref={tabRefs.articles}
             aria-selected={tab === "articles"}
+            aria-controls="panelArticles"
+            tabIndex={tab === "articles" ? 0 : -1}
             onClick={() => select("articles")}
           >
             記事　<span className="tab__count">{articleCount}</span>
@@ -215,15 +399,41 @@ export function Results({
         <p>
           <strong id="spCompanyCount">{companyCount}社</strong> が条件に一致
         </p>
-        <button className="sp-resultbar__sort" type="button">
+        <button
+          className="sp-resultbar__sort"
+          type="button"
+          ref={sortBtnRef}
+          aria-haspopup="dialog"
+          aria-expanded={sortOpen}
+          onClick={() => setSortOpen(true)}
+        >
           {SORT_SP_LABEL[sort] ?? "一致度順"} <span className="tri" aria-hidden="true"></span>
         </button>
+        {sortOpen ? (
+          <Sheet title="並び替え" onClose={closeSort}>
+            <ul className="sheet__opts">
+              {SORT_OPTIONS.map(([v, label]) => (
+                <li key={v}>
+                  <button
+                    className={"sheet__opt" + (sort === v ? " is-on" : "")}
+                    type="button"
+                    aria-current={sort === v ? "true" : undefined}
+                    onClick={() => applySort(v)}
+                  >
+                    {label}
+                    {sort === v ? <span aria-hidden="true">✓</span> : null}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Sheet>
+        ) : null}
       </div>
 
-      <div className="panel" id="panelCompanies" hidden={tab !== "companies"}>
+      <div className="panel" id="panelCompanies" role="tabpanel" aria-labelledby="tabCompanies" hidden={tab !== "companies"}>
         {panelCompanies}
       </div>
-      <div className="panel" id="panelArticles" hidden={tab !== "articles"}>
+      <div className="panel" id="panelArticles" role="tabpanel" aria-labelledby="tabArticles" hidden={tab !== "articles"}>
         {panelArticles}
       </div>
     </>
@@ -345,7 +555,7 @@ export function CompareBar({ items }: { items: Array<{ id: number; name: string 
   const note = n >= 3 || maxNote ? "比較は3社までです" : `あと${3 - n}社まで追加できます`;
 
   return (
-    <div className={"cmp-bar" + (n === 0 ? " is-hidden" : "")} id="cmpBar" ref={barRef}>
+    <div className={"cmp-bar" + (n === 0 ? " is-hidden" : "")} id="cmpBar" ref={barRef} aria-hidden={n === 0}>
       <div className="cmp-bar__inner">
         <div className="cmp-bar__left">
           <p className="cmp-bar__ttl">
@@ -372,14 +582,18 @@ export function CompareBar({ items }: { items: Array<{ id: number; name: string 
           <p className="cmp-bar__note" id="cmpNote">{note}</p>
         </div>
         <div className="cmp-bar__right">
-          <Link className="cmp-bar__btn cmp-bar__btn--white" href="/my/compare">並べて比較する</Link>
-          <Link
-            className="cmp-bar__btn cmp-bar__btn--dark"
-            id="cmpConsult"
-            href={`/inquiry/new?companies=${items.map((i) => i.id).join(",")}&source=compare`}
-          >
-            {n}社にまとめて相談
+          <Link className="cmp-bar__btn cmp-bar__btn--white" href="/my/compare" tabIndex={n === 0 ? -1 : undefined}>
+            並べて比較する
           </Link>
+          {n > 0 ? (
+            <Link
+              className="cmp-bar__btn cmp-bar__btn--dark"
+              id="cmpConsult"
+              href={`/inquiry/new?companies=${items.map((i) => i.id).join(",")}&source=compare`}
+            >
+              {n}社にまとめて相談
+            </Link>
+          ) : null}
         </div>
       </div>
     </div>

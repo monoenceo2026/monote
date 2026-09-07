@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { companyById, dashboardStats, inboxOf } from "@/lib/repo";
+import { companyById, companyWorks, dashboardStats, inboxOf } from "@/lib/repo";
 import { currentUser } from "@/lib/session";
-import { articleSlugsOf, termRankMap, worksCountOf } from "@/lib/extra/admin";
+import { articleSlugsOf, termRankMap } from "@/lib/extra/admin";
+import AdminGate from "./AdminGate";
 import DashFx from "./DashFx";
+import ExportReport, { type ReportData } from "./ExportReport";
 import InboxCard, { type InboxItemData } from "./InboxCard";
 import PeriodSelect from "./PeriodSelect";
+import WorksCard from "./WorksCard";
 import "@/css/admin-dashboard.css";
 
 export const dynamic = "force-dynamic";
@@ -64,6 +66,10 @@ type InboxRow = {
   recipient_status: "open" | "replied" | "declined";
 };
 
+/** 相談元の表示名（社名／担当者名） */
+const contactLine = (i: InboxRow) =>
+  [i.contact_company, i.contact_name ? `${i.contact_name}様` : ""].filter(Boolean).join("／");
+
 function inquiryTitle(i: InboxRow): string {
   const label = INQUIRY_TYPE_LABEL[i.type] ?? "相談";
   const note = (i.note ?? "").trim();
@@ -80,23 +86,29 @@ function inquiryTitle(i: InboxRow): string {
 
 export default async function AdminDashboardPage() {
   const user = await currentUser();
-  if (!user || user.role !== "company" || !user.company_id) redirect("/login");
+  /* 企業アカウント以外は黙って /login へ飛ばさず、理由と切替導線を出す */
+  if (!user || user.role !== "company" || !user.company_id) return <AdminGate user={user} />;
   const company = companyById(user.company_id);
-  if (!company) redirect("/login");
+  if (!company) return <AdminGate user={user} />;
 
   const stats = dashboardStats(company.id);
   const ranks = termRankMap(company.id, stats.terms.map((t) => t.term));
   const slugs = articleSlugsOf(company.id);
-  const worksCount = worksCountOf(company.id);
+  const works = companyWorks(company.id);
+  const WORKS_RECOMMENDED = 5;
 
   const inboxRows = inboxOf(company.id) as InboxRow[];
   const inboxItems: InboxItemData[] = inboxRows.map((i) => ({
     id: i.id,
     title: inquiryTitle(i),
     date: `${dbDate(i.created_at)}受信`,
-    note: i.anonymous
-      ? "匿名相談（社名は返信承諾後に開示）"
-      : [i.contact_company, i.contact_name ? `${i.contact_name}様` : ""].filter(Boolean).join("／"),
+    /* 匿名相談は「返信を承諾した時点で開示」（運営ポリシー3）。
+       replied になったら実際の社名・担当者名を出す。declined のままなら開示しない。 */
+    note: !i.anonymous
+      ? contactLine(i)
+      : i.recipient_status === "replied"
+        ? `（匿名相談）${contactLine(i) || "社名の登録なし"}`
+        : "匿名相談（社名は返信承諾後に開示）",
     status: i.recipient_status,
   }));
   const openCount = inboxRows.filter((i) => i.recipient_status === "open").length;
@@ -110,7 +122,8 @@ export default async function AdminDashboardPage() {
     .filter((t) => t.inquiries === 0 && t.impressions >= 50 && t.clicks / Math.max(1, t.impressions) < 0.15)
     .sort((a, b) => b.impressions - a.impressions)[0];
   const suggestTokens = suggest ? suggest.term.split(/[×✕]/).map((s) => s.trim()).filter(Boolean) : [];
-  const suggestFocus = suggestTokens[suggestTokens.length - 1] ?? "";
+  /* 「短納期（7日以内）」のような括弧つきラベルは文中では長すぎるので括弧を落とす */
+  const suggestFocus = (suggestTokens[suggestTokens.length - 1] ?? "").replace(/[（(].*?[）)]/g, "").trim();
 
   /* 相談ソース横棒（幅は実数比、最大 40.3% = 静的版のスケール） */
   const srcRows = [
@@ -122,10 +135,15 @@ export default async function AdminDashboardPage() {
   const srcMax = Math.max(...srcRows.map((r) => r.n), 1);
 
   /* 会社情報の充足度: 未入力項目を実データから判定 */
-  const todos: Array<{ text: string; cta: string }> = [];
-  if (!company.price_hint.trim()) todos.push({ text: "価格帯の目安が未入力", cta: "入力" });
-  if (worksCount < 5) todos.push({ text: `実績が${worksCount}件（推奨5件以上）`, cta: "追加" });
-  if (!company.equipment.trim()) todos.push({ text: "保有設備の型式が未記載", cta: "入力" });
+  const todos: Array<{ text: string; cta: string; href: string }> = [];
+  if (!company.price_hint.trim()) todos.push({ text: "価格帯の目安が未入力", cta: "入力", href: "/signup" });
+  if (works.length < WORKS_RECOMMENDED)
+    todos.push({
+      text: `実績が${works.length}件（推奨${WORKS_RECOMMENDED}件以上）`,
+      cta: "追加",
+      href: "#works",
+    });
+  if (!company.equipment.trim()) todos.push({ text: "保有設備の型式が未記載", cta: "入力", href: "/signup" });
 
   const kpis = [
     {
@@ -161,25 +179,51 @@ export default async function AdminDashboardPage() {
       comma: false,
       unit: "件",
       diff: countDiff(stats.cur.inquiries, stats.prev.inquiries),
-      note: `未対応 ${openCount}件${company.response_days ? `／返信 平均${company.response_days}営業日` : ""}`,
+      /* 未対応は期間で切らない現在値なので、期間集計の隣に置くことを明示する */
+      note: `未対応 ${openCount}件（累計）${company.response_days ? `／返信 平均${company.response_days}営業日` : ""}`,
       blue: true,
     },
   ];
+
+  const period = `${fmtDate(from)}〜${fmtDate(now)}`;
+  const reportData: ReportData = {
+    companyName: company.name,
+    period,
+    kpis: kpis.map((k) => ({ label: k.label, value: k.value, unit: k.unit, diff: k.diff, note: k.note })),
+    terms: stats.terms.map((t) => ({
+      term: displayTerm(t.term),
+      impressions: t.impressions,
+      clicks: t.clicks,
+      saves: t.saves,
+      inquiries: t.inquiries,
+      rank: ranks.get(t.term) ?? "—",
+    })),
+    articles: stats.articles.map(
+      (a: { title: string; published_at: string | null; views: number; saves: number; inquiries: number }) => ({
+        title: a.title,
+        views: a.views,
+        saves: a.saves,
+        inquiries: a.inquiries,
+        published: dbDate(a.published_at),
+      })
+    ),
+    sources: srcRows.map((r) => ({ label: r.label, n: r.n })),
+  };
 
   return (
     <div className="page-admin-dashboard">
       <Header variant="admin" adminActive="dashboard" />
 
-      <main className="admin-main container-wide">
+      <main id="main" tabIndex={-1} className="admin-main container-wide">
         {/* page head */}
         <div className="dash-head">
           <div className="dash-head__ttl">
             <h1>この1か月の成果</h1>
-            <p className="dash-head__period">{fmtDate(from)}〜{fmtDate(now)}／前月比</p>
+            <p className="dash-head__period">{period}／前月比</p>
           </div>
           <div className="dash-head__actions">
             <PeriodSelect />
-            <button className="btn btn--box btn--outline-thin dash-head__export" type="button">レポートを書き出す</button>
+            <ExportReport data={reportData} />
           </div>
         </div>
 
@@ -209,7 +253,8 @@ export default async function AdminDashboardPage() {
                 <h2 className="dash-card__ttl">あなたの会社が見つかった検索条件</h2>
                 <p className="dash-card__note">相談につながった条件を上位に表示</p>
               </div>
-              <div className="dash-table-wrap">
+              <p className="dash-table-hint" aria-hidden="true">横にスクロールできます →</p>
+              <div className="dash-table-wrap" tabIndex={0} role="group" aria-label="検索条件の成果（横スクロールできます）">
                 <table className="dash-table">
                   <colgroup>
                     <col />
@@ -246,9 +291,9 @@ export default async function AdminDashboardPage() {
                 <div className="dash-suggest">
                   <div className="dash-suggest__txt">
                     <p className="dash-suggest__lead">「{displayTerm(suggest.term)}」で表示はされているのに、クリックが伸びていません。</p>
-                    <p className="dash-suggest__sub">実績・事例に{suggestFocus}の案件を１件追加すると改善が見込めます。</p>
+                    <p className="dash-suggest__sub">実績・事例に「{suggestFocus}」の案件を1件追加すると改善が見込めます。</p>
                   </div>
-                  <Link className="btn dash-btn-sm" href="/signup">実績を追加する</Link>
+                  <a className="btn dash-btn-sm" href="#works">実績を追加する</a>
                 </div>
               ) : null}
             </section>
@@ -258,7 +303,8 @@ export default async function AdminDashboardPage() {
               <div className="dash-card__head">
                 <h2 className="dash-card__ttl">よく読まれている記事</h2>
               </div>
-              <div className="dash-table-wrap">
+              <p className="dash-table-hint" aria-hidden="true">横にスクロールできます →</p>
+              <div className="dash-table-wrap" tabIndex={0} role="group" aria-label="よく読まれている記事（横スクロールできます）">
                 <table className="dash-table">
                   <colgroup>
                     <col />
@@ -301,7 +347,7 @@ export default async function AdminDashboardPage() {
             <section className="dash-card reveal">
               <div className="dash-card__head">
                 <h2 className="dash-card__ttl">相談は、どこから来ているか</h2>
-                <p className="dash-card__note">人口別の相談件数（直近1か月・計{srcTotal}件）</p>
+                <p className="dash-card__note">経路別の相談件数（直近1か月・計{srcTotal}件）</p>
               </div>
               <div className="dash-bars" id="dashBars">
                 {srcRows.map((r) => (
@@ -341,12 +387,19 @@ export default async function AdminDashboardPage() {
                   {todos.map((t) => (
                     <li key={t.text} className="todo-item">
                       <span>{t.text}</span>
-                      <Link className="btn dash-btn-sm" href="/signup">{t.cta}</Link>
+                      {t.href.startsWith("#") ? (
+                        <a className="btn dash-btn-sm" href={t.href}>{t.cta}</a>
+                      ) : (
+                        <Link className="btn dash-btn-sm" href={t.href}>{t.cta}</Link>
+                      )}
                     </li>
                   ))}
                 </ul>
               ) : null}
             </section>
+
+            {/* works (実績) — 追加/削除の実書き込み */}
+            <WorksCard items={works} recommended={WORKS_RECOMMENDED} />
 
             {/* Phase2 */}
             <section className="dash-card dash-card--dashed reveal">

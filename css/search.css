@@ -3,6 +3,18 @@
    ============================================================ */
 
 .page-search { background: var(--white); }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .pc-inline { display: inline; }
 .sp-back { display: none; }
 
@@ -43,7 +55,9 @@
   padding-block: 16px;
   min-height: 64px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
 }
 .cond-bar__inner {
   width: 100%;
@@ -117,6 +131,8 @@
   align-items: stretch;
   /* room for fixed compare bar */
   padding-bottom: 84px;
+  /* ヘッダー＋条件バーと合わせて最低1画面ぶん。結果が0件でもフッター下に白が残らない */
+  min-height: calc(100vh - var(--header-h) - 64px - 320px);
 }
 
 /* ---------- sidebar ---------- */
@@ -135,7 +151,7 @@
   justify-content: space-between;
   line-height: 1.6;
 }
-.sidebar__head h1 {
+.sidebar__head h2 {
   font-family: var(--font-serif);
   font-size: 20px;
   font-weight: 500;
@@ -265,6 +281,13 @@
   font-size: 12px;
   line-height: 1.7;
   white-space: nowrap;
+}
+.f-meta__ttl {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.7;
+  color: var(--sub);
+  margin-bottom: 3px;
 }
 .f-meta__row p { font-weight: 500; color: var(--text); }
 .f-meta__row span:not(.tag) { color: var(--sub); overflow: hidden; text-overflow: ellipsis; }
@@ -549,6 +572,58 @@
   line-height: 1.7;
   color: var(--sub);
 }
+.empty {
+  padding: 24px 0 48px;
+  max-width: 560px;
+}
+.empty__ttl {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.empty__lead {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--sub);
+}
+.empty__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0 20px;
+  padding: 0;
+}
+.empty__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 0.5px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  transition: box-shadow 0.3s ease, transform 0.3s var(--ease-out), border-color 0.2s ease;
+}
+.empty__item:hover {
+  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+  border-color: var(--ink);
+}
+.empty__item-n {
+  flex: none;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--blue);
+}
+.empty__reset { padding: 10px 20px; font-size: 14px; }
 
 /* card actions */
 .c-card__actions {
@@ -647,6 +722,13 @@
   color: var(--white);
 }
 .pager__item--arrow svg { display: block; }
+.pager__item.is-disabled {
+  background: var(--bg);
+  border-color: var(--line);
+  color: var(--line);
+  cursor: default;
+  pointer-events: none;
+}
 
 /* ---------- 記事タブ ---------- */
 .a-row {
@@ -664,6 +746,14 @@
   flex: none;
   width: 180px;
   aspect-ratio: 16 / 10;
+}
+.a-row__photo {
+  flex: none;
+  width: 180px;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border: 0.5px solid var(--line);
+  border-radius: 4px;
 }
 .a-row__body {
   display: flex;
@@ -694,9 +784,16 @@
   background: var(--bg);
   border-top: 0.5px solid var(--ink);
   transform: translateY(0);
-  transition: transform 0.4s var(--ease-out), opacity 0.3s ease;
+  visibility: visible;
+  transition: transform 0.4s var(--ease-out), opacity 0.3s ease, visibility 0s linear 0s;
 }
-.cmp-bar.is-hidden { transform: translateY(100%); opacity: 0; pointer-events: none; }
+.cmp-bar.is-hidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: transform 0.4s var(--ease-out), opacity 0.3s ease, visibility 0s linear 0.4s;
+}
 .cmp-bar__inner {
   padding: 24px 40px;
   display: flex;
@@ -791,6 +888,30 @@
 @media (max-width: 900px) {
   .sidebar { display: none; }
   .results { padding-left: 40px; }
+  .sp-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background: var(--white);
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text);
+    white-space: nowrap;
+    transition: box-shadow 0.25s ease;
+  }
+  .sp-filter-btn:hover { box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1); }
+  /* サイドバーが無い幅ではチップが増えて溢れるので、横スクロールに逃がす */
+  .cond-bar__left { flex: 1 1 auto; }
+  .cond-bar__label, .sp-filter-btn, #condClearAll { flex: none; }
+  .cond-bar__chips {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cond-bar__chips::-webkit-scrollbar { display: none; }
+  .cond-bar__chips .cond-chip { flex: none; }
 }
 
 /* ---------- SP ---------- */
@@ -822,24 +943,6 @@
   .cond-bar__label,
   #condClearAll,
   .cond-btn--save { display: none; }
-  .sp-filter-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 12px;
-    border-radius: 4px;
-    background: var(--white);
-    font-size: 13px;
-    line-height: 1.4;
-    color: var(--text);
-    white-space: nowrap;
-  }
-  .cond-bar__chips {
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-  .cond-bar__chips::-webkit-scrollbar { display: none; }
   .cond-chip__t { padding-inline: 2px 0; }
 
   .layout { display: block; padding-bottom: 76px; }
@@ -931,7 +1034,7 @@
   .pager { margin: 24px 0 48px; }
 
   .a-row { flex-direction: column; }
-  .a-row__thumb { width: 100%; }
+  .a-row__thumb, .a-row__photo { width: 100%; }
 
   /* compare bar: 並べて比較 をダークボタンで表示 */
   .cmp-bar__inner { padding: 12px; }
@@ -948,7 +1051,7 @@
 
 /* ---------- 検索条件の解釈メモ / 保存した検索条件 ---------- */
 .cond-bar__note {
-  padding: 0 40px 10px;
+  padding: 6px 40px 0;
   font-size: 12px;
   line-height: 1.6;
   color: var(--sub);
@@ -999,6 +1102,166 @@
   white-space: nowrap;
 }
 @media (max-width: 768px) {
-  .cond-bar__note { padding: 0 20px 10px; }
+  .cond-bar__note { padding: 6px 12px 0; }
   .save-search__menu { right: auto; left: 0; min-width: 220px; }
+}
+
+
+/* ============================================================
+   SP ボトムシート（絞り込み / 並び替え）
+   ============================================================ */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.sheet__backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: rgba(24, 28, 31, 0.45);
+  animation: sheet-fade 0.2s ease;
+  cursor: pointer;
+}
+.sheet__panel {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.18);
+  animation: sheet-up 0.3s var(--ease-out);
+  outline: none;
+}
+.sheet__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px 12px;
+  border-bottom: 0.5px solid var(--line);
+}
+.sheet__ttl {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.sheet__close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: var(--text);
+  transition: background-color 0.2s ease;
+}
+.sheet__close:hover { background: var(--bg); }
+.sheet__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+}
+.sheet__body:last-child { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+.sheet__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 0.5px solid var(--line);
+  background: var(--white);
+}
+.sheet__clear {
+  flex: none;
+  padding: 12px 16px;
+  border: 0.5px solid var(--line);
+  border-radius: 4px;
+  background: var(--white);
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--text);
+  white-space: nowrap;
+}
+.sheet__apply {
+  flex: 1;
+  padding: 12px 16px;
+  border: 0.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--white);
+  transition: opacity 0.25s ease;
+}
+.sheet__apply:hover { opacity: 0.82; }
+
+/* 絞り込み項目（サイドバーと同じ部品をタップしやすい寸法で） */
+.sheet__filters { display: flex; flex-direction: column; gap: 20px; }
+.sheet__filters .f-group__head h2 { font-size: 16px; }
+.sheet__filters .f-group__body,
+.sheet__filters .f-more { gap: 12px; }
+.sheet__filters .ck { font-size: 14px; padding-block: 3px; gap: 8px; }
+.sheet__filters .ck__box { width: 16px; height: 16px; }
+.sheet__filters .ck__box::after { left: 3.5px; top: 6px; }
+.sheet__filters .f-more-btn { font-size: 13px; padding-block: 4px; }
+.sheet__filters .f-meta__row { white-space: normal; align-items: flex-start; }
+.sheet__filters .f-meta__row span:not(.tag) { text-align: right; }
+
+/* 並び替え */
+.sheet__opts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.sheet__opt {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+.sheet__opt:hover { background: var(--bg); }
+.sheet__opt.is-on { background: var(--skyblue); color: var(--blue); font-weight: 500; }
+
+@keyframes sheet-up {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes sheet-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet__panel, .sheet__backdrop { animation: none; }
+}
+
+@media (max-width: 768px) {
+  .empty { padding: 8px 0 40px; }
+  .empty__ttl { font-size: 17px; }
+  .empty__lead { font-size: 13px; }
+  .empty__item { padding: 14px; font-size: 13px; gap: 12px; }
+  .empty__reset { width: 100%; }
+  .sp-resultbar__sort { padding: 6px 0 3px 8px; }
+  .sheet__panel { max-height: 82vh; }
 }

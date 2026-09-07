@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { Condition } from "@/lib/repo";
+import type { EditorDraft, QuoteSource } from "@/lib/extra/editor";
 import { saveArticleEditorAction } from "./actions";
 
 /* ============================================================
@@ -61,7 +62,54 @@ const grow = (el: HTMLTextAreaElement) => {
 const fmtTime = (d: Date) =>
   `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
-export default function EditorClient({ conditions }: { conditions: Condition[] }) {
+/** DB の "YYYY-MM-DD HH:MM:SS"（UTC）→ "M月D日 HH:MM" */
+const fmtDbTime = (s: string) => {
+  const d = new Date(s.includes("T") ? s : `${s.replace(" ", "T")}Z`);
+  if (Number.isNaN(d.getTime())) return s;
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${fmtTime(d)}`;
+};
+
+/**
+ * 保存すべき中身だけを取り出した署名。
+ * これが「開いたときの中身」と同じ間は自動保存しない
+ * （＝開いただけ／サイドバーを触っただけでは下書き行を作らない）。
+ */
+const signatureOf = (
+  theme: string,
+  title: string,
+  sections: Array<{ heading: string; body: string }>,
+  conditionIds: number[]
+) =>
+  JSON.stringify({
+    theme,
+    title: title.replace(/\s+/g, " ").trim(),
+    sections: sections
+      .map((s) => ({
+        h: String(s.heading ?? "").replace(/\s+/g, " ").trim(),
+        b: String(s.body ?? "").split(/\n+/).map((t) => t.trim()).filter(Boolean),
+      }))
+      .filter((s) => s.h || s.b.length),
+    conds: [...conditionIds].sort((a, b) => a - b),
+  });
+
+export type WorkRef = { id: number; title: string; spec: string };
+
+export default function EditorClient({
+  conditions,
+  draft,
+  works = [],
+  quotes = [],
+}: {
+  conditions: Condition[];
+  draft: EditorDraft | null;
+  works?: WorkRef[];
+  quotes?: QuoteSource[];
+}) {
+  /* 下書きがあればその内容を初期値に（無ければデザイン初期値のデモ文章） */
+  const startTitle = draft ? draft.title : INITIAL_TITLE;
+  const startSections = draft ? draft.sections : INITIAL_SECTIONS.map((s) => ({ heading: s.heading, body: s.body }));
+  const startThemeKey =
+    (draft && THEMES.find((t) => t.db === draft.theme)?.key) || THEMES[0].key;
   /* ---------- body class（静的版 body.page-admin-article） ---------- */
   useEffect(() => {
     document.body.classList.add("page-admin-article");
@@ -71,29 +119,40 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
   /* ---------- チップ（実データの conditions から） ---------- */
   const initialChips = useMemo<ChipState[]>(() => {
     const byLabel = new Map(conditions.map((c) => [c.label, c]));
+    const byId = new Map(conditions.map((c) => [c.id, c]));
     const chips: ChipState[] = [];
-    for (const label of INITIAL_ATTACHED_LABELS) {
-      const c = byLabel.get(label);
-      if (c) chips.push({ id: c.id, label: c.label, attached: true, origin: "body", leaving: false });
+    if (draft) {
+      for (const id of draft.conditionIds) {
+        const c = byId.get(id);
+        if (c) chips.push({ id: c.id, label: c.label, attached: true, origin: "body", leaving: false });
+      }
+    } else {
+      for (const label of INITIAL_ATTACHED_LABELS) {
+        const c = byLabel.get(label);
+        if (c) chips.push({ id: c.id, label: c.label, attached: true, origin: "body", leaving: false });
+      }
     }
     for (const label of SUGGEST_LABELS) {
       const c = byLabel.get(label);
-      if (c) chips.push({ id: c.id, label: c.label, attached: false, origin: "suggest", leaving: false });
+      if (c && !chips.some((x) => x.id === c.id)) {
+        chips.push({ id: c.id, label: c.label, attached: false, origin: "suggest", leaving: false });
+      }
     }
     return chips;
-  }, [conditions]);
+  }, [conditions, draft]);
 
   const [chips, setChips] = useState<ChipState[]>(initialChips);
-  const [themeKey, setThemeKey] = useState<(typeof THEMES)[number]["key"]>("jirei");
+  const [themeKey, setThemeKey] = useState<(typeof THEMES)[number]["key"]>(startThemeKey);
   const [sections, setSections] = useState<SectionState[]>(
-    INITIAL_SECTIONS.map((s, i) => ({ key: i, ...s }))
+    startSections.map((s, i) => ({ key: i, heading: s.heading, body: s.body }))
   );
-  const [titleCount, setTitleCount] = useState(countChars(INITIAL_TITLE));
-  const [mode, setMode] = useState<Status>("draft");
+  const [titleCount, setTitleCount] = useState(countChars(startTitle));
+  const [mode, setMode] = useState<Status>(draft?.status === "review" ? "review" : "draft");
   const [slug, setSlug] = useState("");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [barTime, setBarTime] = useState("");
   const [toast, setToast] = useState("");
+  const [picker, setPicker] = useState<null | "works" | "quotes">(null);
   const [busy, setBusy] = useState(false);
   const [, forceTick] = useState(0);
 
@@ -101,8 +160,8 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
   const contentRef = useRef<{ title: string; sections: Map<number, { heading: string; body: string }> } | null>(null);
   if (!contentRef.current) {
     contentRef.current = {
-      title: INITIAL_TITLE,
-      sections: new Map(INITIAL_SECTIONS.map((s, i) => [i, { heading: s.heading, body: s.body }])),
+      title: startTitle,
+      sections: new Map(startSections.map((s, i) => [i, { heading: s.heading, body: s.body }])),
     };
   }
   const chipsRef = useRef(chips);
@@ -112,8 +171,21 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
   const sectionsRef = useRef(sections);
   sectionsRef.current = sections;
 
-  const articleIdRef = useRef<number | null>(null);
-  const statusRef = useRef<Status>("draft");
+  /* 既存の下書きを開いたときは、その行を上書き更新する（新規行を作らない） */
+  const articleIdRef = useRef<number | null>(draft?.id ?? null);
+  const statusRef = useRef<Status>(draft?.status === "review" ? "review" : "draft");
+  /* 「開いたときの中身」の署名。ここから変化していない間は保存しない */
+  const initialSigRef = useRef(
+    signatureOf(
+      THEMES.find((t) => t.key === startThemeKey)?.db ?? "case",
+      startTitle,
+      startSections,
+      initialChips.filter((c) => c.attached).map((c) => c.id)
+    )
+  );
+  /* 本文 textarea の実DOM（「実績データ」「引用」を挿し込む先） */
+  const bodyElsRef = useRef(new Map<number, HTMLTextAreaElement>());
+  const focusedKeyRef = useRef<number | null>(null);
   const savingRef = useRef(false);
   const pendingRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -135,18 +207,34 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
     conditionIds: chipsRef.current.filter((c) => c.attached).map((c) => c.id),
   });
 
+  /* 現在の中身の署名（開いたときから変化しているかの判定用） */
+  const currentSignature = () => {
+    const c = contentRef.current!;
+    return signatureOf(
+      THEMES.find((t) => t.key === themeRef.current)?.db ?? "case",
+      c.title,
+      sectionsRef.current.map((s) => c.sections.get(s.key) ?? { heading: "", body: "" }),
+      chipsRef.current.filter((x) => x.attached).map((x) => x.id)
+    );
+  };
+
   const doSave = async (status?: Status): Promise<{ ok: boolean; slug?: string }> => {
     if (savingRef.current) {
       pendingRef.current = true;
       return { ok: false };
     }
+    const st0 = status ?? statusRef.current;
+    /* 自動保存は「実際に編集された」ときだけ。開いただけ／初期値のままなら書き込まない */
+    if (!status && currentSignature() === initialSigRef.current) return { ok: false };
     savingRef.current = true;
-    const st = status ?? statusRef.current;
+    const st = st0;
     try {
+      const sig = currentSignature();
       const res = await saveArticleEditorAction(buildPayload(st));
       if (res.ok) {
         articleIdRef.current = res.id;
         statusRef.current = st;
+        initialSigRef.current = sig; /* 保存済みの内容が新しい基準になる */
         setSlug(res.slug);
         const now = new Date();
         setLastSavedAt(now);
@@ -183,9 +271,12 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
   }, [lastSavedAt]);
 
   const autosaveLabel = (() => {
-    if (!lastSavedAt) return "1分前に自動保存しました";
-    const mins = Math.floor((Date.now() - lastSavedAt.getTime()) / 60000);
-    return mins < 1 ? "たった今自動保存しました" : `${mins}分前に自動保存しました`;
+    if (lastSavedAt) {
+      const mins = Math.floor((Date.now() - lastSavedAt.getTime()) / 60000);
+      return mins < 1 ? "たった今自動保存しました" : `${mins}分前に自動保存しました`;
+    }
+    if (draft) return `${fmtDbTime(draft.updatedAt)}に自動保存した下書きです`;
+    return "編集を始めると自動保存します";
   })();
 
   /* ---------- 公開・社内確認 ---------- */
@@ -244,6 +335,28 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
     scheduleAutosave();
   };
 
+  /* ---------- 本文への挿し込み（実績データ／過去の記事から引用） ---------- */
+  const insertIntoBody = (text: string) => {
+    const keys = sectionsRef.current.map((s) => s.key);
+    const key = focusedKeyRef.current != null && keys.includes(focusedKeyRef.current)
+      ? focusedKeyRef.current
+      : keys[keys.length - 1];
+    if (key == null) return;
+    const el = bodyElsRef.current.get(key);
+    const rec = contentRef.current!.sections.get(key);
+    if (!el || !rec) return;
+    const cur = el.value.replace(/\s+$/, "");
+    const next = cur ? `${cur}\n\n${text}` : text;
+    el.value = next;
+    rec.body = next;
+    grow(el);
+    el.focus();
+    el.setSelectionRange(next.length, next.length);
+    setPicker(null);
+    scheduleAutosave();
+    showToast("本文に挿し込みました");
+  };
+
   const lead = THEMES.find((t) => t.key === themeKey)?.lead ?? "起きていた問題";
 
   const blurOnEnter = (ev: React.KeyboardEvent<HTMLElement>) => {
@@ -255,7 +368,7 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
 
   return (
     <>
-      <main className="editor-main container-wide">
+      <main id="main" tabIndex={-1} className="editor-main container-wide">
 
         {/* steps */}
         <div className="steps-row">
@@ -270,6 +383,15 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
           </ol>
           <p className="steps-row__saved js-autosave">{autosaveLabel}</p>
         </div>
+
+        {draft ? (
+          <div className="draft-note" role="status">
+            <p className="draft-note__txt">
+              保存済みの下書き「{draft.title || "（無題の下書き）"}」の続きから編集しています。
+            </p>
+            <a className="mini-btn" href="/admin/articles/new?new=1">新しい記事を書く</a>
+          </div>
+        ) : null}
 
         {/* theme */}
         <section className="theme-sec" aria-label="選んだテーマ">
@@ -305,6 +427,8 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
               contentEditable
               suppressContentEditableWarning
               spellCheck={false}
+              role="textbox"
+              aria-label="記事タイトル"
               onInput={(ev) => {
                 const text = ev.currentTarget.textContent ?? "";
                 contentRef.current!.title = text;
@@ -313,7 +437,7 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
               }}
               onKeyDown={blurOnEnter}
             >
-              {INITIAL_TITLE}
+              {startTitle}
             </h2>
             <div className="editor-title-hint">
               <p>検索されやすいタイトルの例：〈材質〉＋〈困りごと〉＋〈どうしたか〉現在<span className="js-title-count">{titleCount}</span>文字（推奨25〜45文字）</p>
@@ -325,8 +449,23 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
                 <p className="assist-bar__txt">箇条書きや音声メモから下書きをつくる</p>
               </div>
               <div className="assist-bar__btns">
-                <button className="mini-btn" type="button">下書きを作る</button>
-                <button className="mini-btn" type="button">過去の記事から引用</button>
+                <button
+                  className="mini-btn"
+                  type="button"
+                  disabled
+                  title="箇条書き・音声メモからの下書き生成は準備中です"
+                  aria-label="下書きを作る（準備中）"
+                >
+                  下書きを作る（準備中）
+                </button>
+                <button
+                  className={`mini-btn${picker === "quotes" ? " is-on" : ""}`}
+                  type="button"
+                  aria-expanded={picker === "quotes"}
+                  onClick={() => setPicker((p) => (p === "quotes" ? null : "quotes"))}
+                >
+                  過去の記事から引用
+                </button>
               </div>
             </div>
 
@@ -343,6 +482,8 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
                     contentEditable
                     suppressContentEditableWarning
                     spellCheck={false}
+                    role="textbox"
+                    aria-label={`見出し${i + 1}`}
                     data-placeholder="見出しを入力"
                     onInput={(ev) => {
                       const rec = contentRef.current!.sections.get(sec.key);
@@ -359,7 +500,15 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
                   aria-label={`見出し${i + 1}の本文`}
                   defaultValue={sec.body}
                   rows={3}
-                  ref={(el) => { if (el) grow(el); }}
+                  ref={(el) => {
+                    if (el) {
+                      grow(el);
+                      bodyElsRef.current.set(sec.key, el);
+                    } else {
+                      bodyElsRef.current.delete(sec.key);
+                    }
+                  }}
+                  onFocus={() => { focusedKeyRef.current = sec.key; }}
                   onInput={(ev) => {
                     const el = ev.currentTarget;
                     const rec = contentRef.current!.sections.get(sec.key);
@@ -376,8 +525,8 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
                     <div className="photo-row__note">
                       <p>写真が用意できない場合は、そのまま公開できます。<br />図・表・テキストだけの記事でも検索対象になります。</p>
                       <div className="photo-row__btns">
-                        <button className="mini-btn" type="button">スマホから送る</button>
-                        <button className="mini-btn" type="button">図をつくる</button>
+                        <button className="mini-btn" type="button" disabled title="スマホからの写真送信は準備中です" aria-label="スマホから送る（準備中）">スマホから送る（準備中）</button>
+                        <button className="mini-btn" type="button" disabled title="図の作成は準備中です" aria-label="図をつくる（準備中）">図をつくる（準備中）</button>
                       </div>
                     </div>
                   </div>
@@ -387,10 +536,57 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
 
             <div className="editor-tools">
               <button className="mini-btn mini-btn--plus" type="button" onClick={addSection}><PlusIcon />見出しを追加</button>
-              <button className="mini-btn mini-btn--plus" type="button"><PlusIcon />画像</button>
-              <button className="mini-btn mini-btn--plus" type="button"><PlusIcon />表</button>
-              <button className="mini-btn mini-btn--plus" type="button"><PlusIcon />実績データ</button>
+              <button className="mini-btn mini-btn--plus" type="button" disabled title="画像の挿入は準備中です（記事は文章だけでも公開できます）" aria-label="画像（準備中）"><PlusIcon />画像（準備中）</button>
+              <button className="mini-btn mini-btn--plus" type="button" disabled title="表の挿入は準備中です" aria-label="表（準備中）"><PlusIcon />表（準備中）</button>
+              <button
+                className={`mini-btn mini-btn--plus${picker === "works" ? " is-on" : ""}`}
+                type="button"
+                aria-expanded={picker === "works"}
+                onClick={() => setPicker((p) => (p === "works" ? null : "works"))}
+              >
+                <PlusIcon />実績データ
+              </button>
             </div>
+
+            {picker ? (
+              <div className="insert-picker" role="group" aria-label={picker === "works" ? "挿し込む実績" : "引用する記事"}>
+                <p className="insert-picker__ttl">
+                  {picker === "works" ? "登録済みの実績を本文に挿し込みます" : "公開済みの記事から引用します"}
+                </p>
+                <div className="insert-picker__items">
+                  {picker === "works"
+                    ? works.map((w) => (
+                        <button
+                          key={w.id}
+                          className="insert-picker__item"
+                          type="button"
+                          onClick={() => insertIntoBody(`【実績】${w.title}${w.spec ? `（${w.spec}）` : ""}`)}
+                        >
+                          <span className="insert-picker__item-ttl">{w.title}</span>
+                          {w.spec ? <span className="insert-picker__item-sub">{w.spec}</span> : null}
+                        </button>
+                      ))
+                    : quotes.map((q) => (
+                        <button
+                          key={q.id}
+                          className="insert-picker__item"
+                          type="button"
+                          onClick={() => insertIntoBody(`「${q.title}」より：${q.excerpt}`)}
+                        >
+                          <span className="insert-picker__item-ttl">{q.title}</span>
+                          {q.excerpt ? <span className="insert-picker__item-sub">{q.excerpt}</span> : null}
+                        </button>
+                      ))}
+                  {(picker === "works" ? works.length : quotes.length) === 0 ? (
+                    <p className="insert-picker__empty">
+                      {picker === "works"
+                        ? "登録済みの実績がありません。ダッシュボードの「実績（加工事例）」から追加できます。"
+                        : "公開済みの記事がまだありません。"}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </section>
 
           {/* sidebar */}
@@ -401,7 +597,7 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
                 <h2 className="side-card__ttl side-card__ttl--ink">この記事につける条件</h2>
                 <span className="tag tag--blue">検索に必要</span>
               </div>
-              <p className="side-card__desc">本文から候補を拾いました。合っていれば残してください。</p>
+              <p className="side-card__desc">よく使われる条件です。合うものを残してください。</p>
               <div className="cond-chips js-chips">
                 {chips.map((c) => (
                   <button
@@ -416,7 +612,7 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
                 ))}
               </div>
               <hr className="side-card__line" />
-              <p className="side-card__desc"><strong>条件を3つ以上つけた記事は、検索での表示が平均2.4倍</strong>（β版の実測値）をここに表示</p>
+              <p className="side-card__desc"><strong>条件を3つ以上つけた記事は、検索での表示が平均2.4倍</strong>になります（β版の実測値）。</p>
             </section>
 
             <section className="side-card reveal" aria-label="公開の設定">
@@ -470,8 +666,10 @@ export default function EditorClient({ conditions }: { conditions: Condition[] }
               "社内確認へ回しました（承認者：工場長）"
             ) : barTime ? (
               `下書き保存済み ${barTime}・所要時間の目安 15分`
+            ) : draft ? (
+              `下書きを読み込みました（${fmtDbTime(draft.updatedAt)}保存）・所要時間の目安 15分`
             ) : (
-              "下書き保存済み・所要時間の目安 15分"
+              "編集すると下書きが自動保存されます・所要時間の目安 15分"
             )}
           </p>
           <div className="action-bar__btns">

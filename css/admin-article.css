@@ -54,6 +54,25 @@ body.page-admin-article { background: var(--white); }
   height: 1px;
   background: var(--line);
 }
+/* 読み込んだ下書きの案内（開くたびに新規作成しないための導線） */
+.draft-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 10px 16px;
+  background: var(--skyblue);
+  border: 0.5px solid var(--blue);
+  border-radius: 4px;
+}
+.draft-note__txt {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--blue);
+}
+.draft-note .mini-btn { background: var(--white); white-space: nowrap; }
+
 .steps-row__saved {
   font-size: 14px;
   letter-spacing: -0.02em;
@@ -189,6 +208,12 @@ body.page-admin-article { background: var(--white); }
   color: var(--ink);
 }
 .editor-title:focus { outline: none; }
+/* キーボード操作時は必ず見える焦点表示を出す（base.css の .input:focus と同じ考え方） */
+.editor-title:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
 .editor-title-hint {
   width: 100%;
   border-top: 1px solid var(--line);
@@ -259,6 +284,50 @@ body.page-admin-article { background: var(--white); }
 }
 .mini-btn:hover { border-color: var(--sub); }
 .mini-btn:active { transform: scale(0.97); }
+/* 準備中の機能は押せないことを見た目でも示す */
+.mini-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg);
+}
+.mini-btn[disabled]:hover { border-color: var(--line); }
+.mini-btn[disabled]:active { transform: none; }
+.mini-btn.is-on { border-color: var(--blue); color: var(--blue); background: var(--skyblue); }
+
+/* 実績データ／過去の記事から引用 のピッカー */
+.insert-picker {
+  margin-top: 12px;
+  padding: 12px;
+  border: 0.5px solid var(--blue);
+  border-radius: 4px;
+  background: var(--skyblue);
+}
+.insert-picker__ttl {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--blue);
+}
+.insert-picker__items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.insert-picker__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--white);
+  border: 0.5px solid var(--line);
+  border-radius: 4px;
+  text-align: left;
+  transition: border-color 0.2s ease;
+}
+.insert-picker__item:hover { border-color: var(--blue); }
+.insert-picker__item-ttl { font-size: 13px; font-weight: 500; line-height: 1.5; color: var(--text); }
+.insert-picker__item-sub { font-size: 12px; line-height: 1.5; color: var(--sub); }
+.insert-picker__empty { font-size: 12px; line-height: 1.6; color: var(--sub); }
 .mini-btn svg {
   width: 16px;
   height: 16px;
@@ -305,10 +374,20 @@ body.page-admin-article { background: var(--white); }
   color: var(--text);
 }
 .editor-body:focus { outline: none; }
+.editor-body:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
 .editor-body::placeholder { color: var(--sub); opacity: 0.7; }
 
 /* 見出し contenteditable */
 .editor-h li:focus { outline: none; }
+.editor-h li:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
 .editor-h li:empty::before {
   content: attr(data-placeholder);
   color: var(--sub);
@@ -592,12 +671,24 @@ body.page-admin-article { background: var(--white); }
 
 @media (max-width: 900px) {
   .admin-nav { display: none; }
+  /* 共有 Header の実クラス名。会社名を出したままだと SP でヘッダーがはみ出す */
+  .admin-company-name { display: none; }
   .admin-header__company { display: none; }
+}
+
+@media (max-width: 600px) {
+  .site-header__inner--admin { padding-inline: 16px; gap: 8px; }
+  .site-header__inner--admin .brand { font-size: 20px; }
+  .site-header__inner--admin .admin-badge { margin-left: 8px; }
+  .site-header__inner--admin .site-header__actions { margin-left: auto; gap: 8px; }
+  .site-header__inner--admin .site-header__actions .btn { padding: 6px 12px; font-size: 13px; }
 }
 
 @media (max-width: 768px) {
   body.page-admin-article { padding-bottom: 132px; }
+  .site-header__inner--admin { padding-inline: 20px; }
   .admin-header__inner { padding-inline: 20px; }
+  .draft-note { flex-direction: column; align-items: flex-start; }
   .editor-main { padding-top: 24px; }
 
   .steps-row { flex-direction: column; align-items: flex-start; gap: 12px; }
