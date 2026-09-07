@@ -26,8 +26,14 @@ export default function InboxCard({ items }: { items: InboxItemData[] }) {
   const [handled, setHandled] = useState<Record<number, "replied" | "declined">>({});
   const [, startTransition] = useTransition();
 
+  const [showDone, setShowDone] = useState(false);
+
+  const isOpen = (i: InboxItemData) => i.status === "open" && !handled[i.id];
   const shown = items.filter((i) => i.status === "open" || handled[i.id]);
-  const openCount = items.filter((i) => i.status === "open" && !handled[i.id]).length;
+  /* 対応済みの相談は既定では畳むが、辿れなくなると過去のやり取りを
+     二度と確認できないので、件数付きで開けるようにしておく */
+  const doneOnly = items.filter((i) => i.status !== "open" && !handled[i.id]);
+  const openCount = items.filter(isOpen).length;
 
   /* keep every 受信箱バッジ (incl. the header nav [data-inbox-count]) on the real count */
   useEffect(() => {
@@ -73,6 +79,33 @@ export default function InboxCard({ items }: { items: InboxItemData[] }) {
         );
       })}
       {shown.length === 0 ? <p className="dash-card__foot">未対応の相談はありません。</p> : null}
+
+      {doneOnly.length > 0 ? (
+        <div className="inbox-done">
+          <button
+            className="inbox-done__toggle"
+            type="button"
+            aria-expanded={showDone}
+            aria-controls="inbox-done-list"
+            onClick={() => setShowDone((v) => !v)}
+          >
+            対応済みの相談 {doneOnly.length}件{showDone ? "を隠す" : "を見る"}
+          </button>
+          <div id="inbox-done-list" hidden={!showDone}>
+            {doneOnly.map((item) => (
+              <article key={item.id} className="inbox-item is-done">
+                <div className="inbox-item__meta">
+                  <span className="tag inbox-item__state">{DONE_LABEL[item.status as "replied" | "declined"]}</span>
+                  <span className="inbox-item__date">{item.date}</span>
+                </div>
+                <p className="inbox-item__ttl">{item.title}</p>
+                {item.note ? <p className="inbox-item__note">{item.note}</p> : null}
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <p className="dash-card__foot">3営業日以内の返信で、検索順位と「返信の早さ」表示が改善します。</p>
     </section>
   );

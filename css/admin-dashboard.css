@@ -198,9 +198,13 @@
   font-weight: 500;
   letter-spacing: -0.05em;
   line-height: 1.6;
-  color: #3ea583;
+  color: #2f8468; /* 白背景 12px でも 4.5:1 を満たす緑 */
 }
+/* 長い注記でも KPI 行を押し広げない（ページ全体が横スクロールしないように） */
+.kpi-card { min-width: 0; }
 .kpi-card__note {
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 13px;
   letter-spacing: -0.05em;
   line-height: 1.6;
@@ -276,6 +280,8 @@
 
 /* ---------- tables ---------- */
 .dash-table-wrap { overflow-x: auto; }
+.dash-table-wrap:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.dash-table-hint { display: none; }
 .dash-table {
   width: 100%;
   border-collapse: collapse;
@@ -502,6 +508,147 @@
 }
 .dash-card--dashed .dash-card__foot { margin-top: 8px; }
 
+
+/* ---------- 実績（works）カード ---------- */
+.works-lead { margin-top: 8px; }
+.works-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+.works-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: 4px;
+}
+.works-item--empty {
+  justify-content: flex-start;
+  font-size: 13px;
+  color: var(--sub);
+}
+.works-item__txt { min-width: 0; }
+.works-item__ttl {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: break-word;
+}
+.works-item__spec {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--sub);
+  word-break: break-word;
+}
+.works-add { margin-top: 16px; }
+.works-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 0.5px solid var(--line);
+  border-radius: 4px;
+}
+.works-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--sub);
+}
+.works-field input {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--white);
+  border: 0.5px solid var(--line);
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.works-field input:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.works-form__btns { display: flex; gap: 8px; }
+.dash-btn-sm--dark {
+  background: var(--ink, #1a1a1a);
+  border-color: var(--ink, #1a1a1a);
+  color: var(--white);
+}
+.dash-btn-sm[disabled] { opacity: 0.5; }
+.works-msg {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--blue);
+}
+
+/* ---------- 企業アカウントが必要です（AdminGate） ---------- */
+.admin-gate {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 0 24px;
+}
+.admin-gate__eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--sub);
+}
+.admin-gate__ttl {
+  margin-top: 8px;
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.admin-gate__lead {
+  margin-top: 16px;
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--text);
+}
+.admin-gate__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+.admin-gate__note {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+.admin-gate__box {
+  margin-top: 32px;
+  padding: 20px;
+  border: 0.5px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.admin-gate__box-ttl {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.admin-gate__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.admin-gate__list a { color: var(--text); text-decoration: underline; }
+.admin-gate__list a:hover { color: var(--blue); }
+
 /* ============================================================
    responsive
    ============================================================ */
@@ -533,8 +680,23 @@
     gap: 4px;
   }
   .dash-card__note { white-space: normal; }
-  .dash-table th, .dash-table td { white-space: normal; }
-  .dash-table td:first-child { min-width: 120px; }
+  /* 表は潰さず、カード内で横スクロールさせる（ページ全体は横スクロールしない） */
+  .dash-table-hint {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--sub);
+  }
+  .dash-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .dash-table { width: max-content; min-width: 100%; }
+  .dash-table .col-num { width: auto; }
+  .dash-table th, .dash-table td { white-space: nowrap; padding: 8px 10px; }
+  .dash-table td:first-child { max-width: 22em; overflow: hidden; text-overflow: ellipsis; }
   .dash-suggest {
     flex-direction: column;
     align-items: flex-start;
@@ -550,3 +712,15 @@
   .inbox-item__actions { gap: 8px; }
   .inbox-item__actions .btn { padding-inline: 16px; }
 }
+
+/* ---------- 受信箱：対応済みの相談（既定は折りたたみ） ---------- */
+.inbox-done { margin-top: 8px; border-top: 0.5px solid var(--line); padding-top: 12px; }
+.inbox-done__toggle {
+  font-size: 13px;
+  color: var(--sub);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 4px 0;
+}
+.inbox-done__toggle:hover { color: var(--ink); }
+.inbox-done__toggle:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
