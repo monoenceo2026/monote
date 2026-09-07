@@ -3,8 +3,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { companyById, compareList } from "@/lib/repo";
 import { currentUser, sessionKey } from "@/lib/session";
-import { inquiryWithRecipients, type SentInquiry } from "@/lib/extra/inquiry";
-import InquiryClient, { type Recipient } from "./InquiryClient";
+import { draftForEditing, inquiryWithRecipients, type SentInquiry } from "@/lib/extra/inquiry";
+import InquiryClient, { type InitialValues, type Recipient } from "./InquiryClient";
 import BodyClass from "./BodyClass";
 import RevealOnParams from "./RevealOnParams";
 import "@/css/inquiry.css";
@@ -22,7 +22,7 @@ function SentScreen({ sent }: { sent: SentInquiry }) {
   const n = sent.recipients.length;
   const hitsDemo = sent.recipients.some((r) => r.id === DEMO_COMPANY_ID);
   return (
-    <main className="inquiry container-wide">
+    <main className="inquiry container-wide" id="main" tabIndex={-1}>
       <div className="steps">
         <ol className="steps__list">
           <li className="steps__pill is-done">1　相談の種類</li>
@@ -85,23 +85,41 @@ export default async function InquiryNewPage({ searchParams }: { searchParams: P
   }
 
   const user = await currentUser();
+  const key = await sessionKey();
 
-  /* 送信先: ?companies=1,2,3 の実カード。指定なしは比較リストをデフォルトに */
+  /* ?draft=<id> → 保存した下書きから再開（本人のものだけ。他人のIDは無視してまっさらなフォーム） */
+  const draftParam = one(sp.draft);
+  const draft = draftParam
+    ? draftForEditing(parseInt(draftParam, 10), { userId: user?.id ?? null, sessionId: key })
+    : null;
+  const initial: InitialValues | null = draft
+    ? {
+        type: draft.type, process: draft.process, material: draft.material, quantity: draft.quantity,
+        deadline: draft.deadline, size: draft.size, required_precision: draft.required_precision,
+        budget: draft.budget, industry: draft.industry, note: draft.note,
+        attachments: draft.attachments, anonymous: draft.anonymous, no_forward: draft.no_forward,
+      }
+    : null;
+
+  /* 送信先: ?companies=1,2,3 の実カード。下書き経由ならその送信先、指定なしは比較リスト */
   const companiesParam = one(sp.companies);
-  let recipients: Recipient[];
-  if (companiesParam) {
-    const ids = [...new Set(companiesParam.split(",").map((s) => parseInt(s.trim(), 10)).filter((i) => Number.isFinite(i)))];
-    recipients = ids
+  const toCards = (ids: number[]): Recipient[] =>
+    [...new Set(ids)]
       .map((id) => companyById(id))
       .filter((c): c is NonNullable<ReturnType<typeof companyById>> => c != null)
       .map((c) => ({ id: c.id, name: c.name, response_days: c.response_days }));
+
+  let recipients: Recipient[];
+  if (companiesParam) {
+    recipients = toCards(companiesParam.split(",").map((s) => parseInt(s.trim(), 10)).filter((i) => Number.isFinite(i)));
+  } else if (draft && draft.recipientCompanyIds.length) {
+    recipients = toCards(draft.recipientCompanyIds);
   } else {
-    const key = await sessionKey();
     recipients = compareList(key).map((c) => ({ id: c.id, name: c.name, response_days: c.response_days }));
   }
 
-  /* ログイン中（田中様）は連絡先を自動プリフィル */
-  const contact = user
+  /* ログイン中（田中様）は連絡先を自動プリフィル。下書きに入っていればそちらを優先 */
+  const prefill = user
     ? {
         company: user.role === "buyer" ? "株式会社△△" : user.name,
         name: user.name,
@@ -109,12 +127,26 @@ export default async function InquiryNewPage({ searchParams }: { searchParams: P
         phone: "",
       }
     : { company: "", name: "", email: "", phone: "" };
+  const contact = draft
+    ? {
+        company: draft.contact_company || prefill.company,
+        name: draft.contact_name || prefill.name,
+        email: draft.contact_email || prefill.email,
+        phone: draft.contact_phone || prefill.phone,
+      }
+    : prefill;
 
   return (
     <>
       <BodyClass className="page-inquiry" />
       <Header variant="plain" />
-      <InquiryClient recipients={recipients} contact={contact} source={one(sp.source) || "search"} />
+      <InquiryClient
+        recipients={recipients}
+        contact={contact}
+        source={draft?.source || one(sp.source) || "search"}
+        initial={initial}
+        draftId={draft?.id ?? null}
+      />
       <Footer />
       <RevealOnParams />
     </>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { companyById, createInquiry } from "@/lib/repo";
+import { draftForEditing, latestDraftId, updateDraft } from "@/lib/extra/inquiry";
 import { currentUser, ensureSessionKey } from "@/lib/session";
 
 export type InquiryPayload = {
@@ -24,9 +25,12 @@ export type InquiryPayload = {
   contact_phone: string;
   source: string;
   recipientCompanyIds: number[];
+  /** 上書き対象の下書きID（?draft=<id> で開いた／このセッションで保存済みのとき） */
+  draftId?: number;
 };
 
 export type SendResult = { ok: true; id: number } | { ok: false; errors: string[] };
+export type DraftResult = { ok: true; id: number; reused: boolean } | { ok: false; errors: string[] };
 
 /* 入力長の上限（DB肥大化・巨大レスポンス対策）。UI の想定を十分に上回る値にする。 */
 const LIMITS: Record<string, number> = {
@@ -112,12 +116,29 @@ export async function sendInquiryAction(p: InquiryPayload): Promise<SendResult> 
   return { ok: true, id };
 }
 
-/** 「下書きとして保存」— drafts are saved as-is (validation applies to 送信 only) */
-export async function saveDraftAction(p: InquiryPayload): Promise<{ ok: true; id: number }> {
+/**
+ * 「下書きとして保存」— 押すたびに行が増えないよう、同一セッション（ログイン中は同一ユーザー）の
+ * 直近の下書きがあれば作り直さずに上書きする。新規作成のときだけレート制限をかける。
+ * 検証は送信時のみ（下書きは書きかけをそのまま保存する）。
+ */
+export async function saveDraftAction(p: InquiryPayload): Promise<DraftResult> {
   const user = await currentUser();
   const sessionId = await ensureSessionKey();
-  if (rateLimited(sessionId + ":draft")) return { ok: true, id: 0 };
-  const id = createInquiry(toNewInquiry(p, user?.id ?? null, "draft", sessionId));
+  const viewer = { userId: user?.id ?? null, sessionId };
+  const payload = toNewInquiry(p, user?.id ?? null, "draft", sessionId);
+
+  /* 明示された下書き → 同一セッションの直近の下書き の順に上書き先を探す */
+  const target =
+    (p.draftId && draftForEditing(p.draftId, viewer) ? p.draftId : null) ?? latestDraftId(viewer);
+  if (target && updateDraft(target, viewer, payload)) {
+    revalidatePath("/inquiry/new");
+    revalidatePath("/my/compare");
+    return { ok: true, id: target, reused: true };
+  }
+
+  if (rateLimited(sessionId + ":draft")) return { ok: false, errors: ["rate_limited"] };
+  const id = createInquiry(payload);
   revalidatePath("/inquiry/new");
-  return { ok: true, id };
+  revalidatePath("/my/compare");
+  return { ok: true, id, reused: false };
 }

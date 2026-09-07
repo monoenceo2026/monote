@@ -233,7 +233,13 @@
   color: var(--text);
   background: transparent;
 }
+/* base.css の .input:focus と同じ扱い（outline は消すが、キーボード操作では枠と影で示す） */
 .memo-input:focus { outline: none; }
+.memo-input:focus-visible {
+  outline: none;
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 3px var(--blue);
+}
 .memo-input::placeholder { color: var(--sub); opacity: 0.5; }
 
 /* actions row */
@@ -412,6 +418,8 @@
 
 /* ---------- dynamic panels (保存した企業 / 相談の履歴 tabs) ---------- */
 .cmp-panel { margin-top: 24px; }
+.cmp-drafts { margin-top: 32px; }
+.cmp-drafts .sec-ttl { margin-bottom: 16px; }
 .cmp-panel .saved__grid { margin-top: 0; }
 .cmp-empty a { text-decoration: underline; text-underline-offset: 3px; }
 
@@ -461,9 +469,20 @@
   .saved__grid { grid-template-columns: 1fr; gap: 16px; }
 }
 
+/* SP: ヘッダのボタンが入りきらずページ全体が横スクロールしていた対策。
+   このページ自身へのリンク（保存した企業 / マイページ）はタブと重複するので、狭い幅では隠す。
+   Header.tsx は共有コンポーネントなので、比較ページを表示しているときだけに限定する。 */
+@media (max-width: 620px) {
+  body:has(.cmp-main) .site-header__actions > a[href^="/my/compare"] { display: none; }
+  body:has(.cmp-main) .site-header__inner { gap: 12px; }
+  body:has(.cmp-main) .site-header__actions { gap: 8px; }
+  body:has(.cmp-main) .site-header__actions .btn { padding-inline: 14px; }
+}
+
 @media (max-width: 480px) {
   .site-header__inner { padding-inline: 16px; }
   .site-header__actions .btn--box { padding: 8px 14px; }
+  body:has(.cmp-main) .site-header__actions .btn { padding-inline: 12px; font-size: 13px; }
   .bulk__btns { flex-direction: column; }
   .bulk__mask, .bulk__go { flex: none; }
 }

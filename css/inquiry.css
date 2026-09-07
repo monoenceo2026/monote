@@ -4,6 +4,20 @@
 
 .inquiry { padding-bottom: 80px; }
 
+/* 読み上げ専用の h1（Figma の意匠を変えずに見出し構造を成立させる） */
+.iq-h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ---------- step indicator ---------- */
 .steps {
   margin-top: 40px;
@@ -480,6 +494,51 @@
   color: var(--red);
 }
 
+/* 下書き保存のフィードバック（右カラム） */
+.side-card__note {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+.side-card__note-link {
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ---------- 自動保存の復元バー（localStorage から戻したとき） ---------- */
+.iq-restore {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--skyblue);
+  border: 0.5px solid var(--blue);
+  border-radius: 4px;
+}
+.iq-restore__txt {
+  font-size: 13px;
+  line-height: 1.6;
+  letter-spacing: -0.02em;
+  color: var(--blue);
+}
+.iq-restore__discard {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.iq-restore__discard:hover { opacity: 0.7; }
+
 /* ---------- 送信完了 (?sent=<id>) ---------- */
 .iq-done {
   margin-top: 40px;
@@ -578,6 +637,8 @@
   .dropzone__hint { font-size: 13px; }
 }
 @media (max-width: 480px) {
+  .iq-restore { padding: 10px 12px; gap: 6px; }
+  .iq-restore__txt, .iq-restore__discard { font-size: 12px; }
   .page-inquiry .site-header__inner { padding-inline: 16px; gap: 12px; }
   .page-inquiry .site-header__actions { gap: 8px; }
   .page-inquiry .site-header__actions .btn { padding: 8px 12px; font-size: 13px; }

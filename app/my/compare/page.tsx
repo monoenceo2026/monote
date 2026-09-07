@@ -4,15 +4,19 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { currentUser, sessionKey } from "@/lib/session";
 import {
+  allConditions,
   companyArticles,
   compareList,
   conditionsOfCompany,
+  inquiryDraftsOf,
   inquiryHistoryOf,
   savedArticles,
   savedCompanies,
   type Company,
+  type Condition,
 } from "@/lib/repo";
 import { CompareTabs, MaskToggle, MemoCell, RemoveButton } from "./parts";
+import { lastSearchTerm } from "./queries";
 import "@/css/compare.css";
 
 export const dynamic = "force-dynamic";
@@ -22,17 +26,16 @@ export const metadata: Metadata = {
   description: "保存した企業を並べて比較し、条件の合う会社にまとめて相談できます。",
 };
 
-/* 比較の基準にしている検索条件（チップ表示） */
-const BASE_CHIPS = ["SUS304", "板金・レーザー", "1〜50個", "7日以内"];
-
-/* チップに対応する条件（一致数の分母）。「1〜50個」は 1個から＋小ロット の2条件にまたがる */
-const CRITERIA: Array<{ name: string; key: string }> = [
-  { name: "材質", key: "material:ステンレス" },
-  { name: "加工", key: "process:板金・プレス" },
-  { name: "ロット", key: "lot:1個から（試作）" },
-  { name: "ロット", key: "lot:小ロット（〜100個）" },
-  { name: "納期", key: "delivery:短納期（7日以内）" },
-];
+/* 条件カテゴリの表示名（「材質のみ不一致」などの文言に使う） */
+const CATEGORY_NAME: Record<string, string> = {
+  process: "加工",
+  material: "材質",
+  lot: "ロット",
+  delivery: "納期",
+  cert: "認証",
+  area: "エリア",
+  precision: "精度",
+};
 
 type CmpItem = {
   c: Company & { memo: string };
@@ -84,23 +87,45 @@ type HistoryRow = {
   created_at: string;
 };
 
-const HISTORY_TYPE: Record<string, string> = { estimate: "見積相談", technical: "技術相談" };
+const HISTORY_TYPE: Record<string, string> = {
+  estimate: "見積相談",
+  feasibility: "可否確認",
+  technical: "技術相談",
+  partner: "協力会社",
+};
+
+/** 相談カードの見出し（条件が空の下書きでも「相談」で潰れないように） */
+const inquiryTitle = (h: HistoryRow) =>
+  [h.process, h.material, h.quantity].filter(Boolean).join("／") || "（条件は未入力）";
 
 export default async function ComparePage() {
   const user = await currentUser();
   const key = await sessionKey();
 
+  /* 「比較の基準にしている検索条件」は直近の検索から作る（固定文言だと実際の操作と食い違う）。
+     条件ラベルに一致したものが一致数の分母、それ以外（フリーワード）はチップ表示のみ。 */
+  const searchTerm = lastSearchTerm(key);
+  const searchLabels = searchTerm.split("×").map((t) => t.trim()).filter(Boolean);
+  const conditionByLabel = new Map(allConditions().map((c) => [c.label, c]));
+  const criteria: Condition[] = searchLabels
+    .map((l) => conditionByLabel.get(l))
+    .filter((c): c is Condition => c != null);
+  const freeTerms = searchLabels.filter((l) => !conditionByLabel.has(l));
+  const chips = [...criteria.map((c) => c.label), ...freeTerms];
+
   const list = compareList(key);
   const companies = savedCompanies(key);
   const articles = savedArticles(key);
+  /* 履歴は送信済みのみ（inquiryHistoryOf が status='sent' 限定）。下書きは別枠で出す */
   const history: HistoryRow[] = user ? (inquiryHistoryOf(user.id) as HistoryRow[]) : [];
+  const drafts: HistoryRow[] = user ? (inquiryDraftsOf(user.id) as HistoryRow[]) : [];
 
   /* ---------- 比較テーブルの実データ + 優位セル計算 ---------- */
   const items: CmpItem[] = list.map((c) => {
     const conds = conditionsOfCompany(c.id);
-    const keys = new Set(conds.map((x) => `${x.category}:${x.label}`));
-    const match = CRITERIA.filter((cr) => keys.has(cr.key)).length;
-    const missing = [...new Set(CRITERIA.filter((cr) => !keys.has(cr.key)).map((cr) => cr.name))];
+    const ids = new Set(conds.map((x) => x.id));
+    const match = criteria.filter((cr) => ids.has(cr.id)).length;
+    const missing = [...new Set(criteria.filter((cr) => !ids.has(cr.id)).map((cr) => CATEGORY_NAME[cr.category] ?? cr.category))];
     const matchLabel =
       missing.length === 0 ? "すべて対応" : missing.length === 1 ? `${missing[0]}のみ不一致` : `${missing.join("・")}が不一致`;
     return {
@@ -129,7 +154,10 @@ export default async function ComparePage() {
   const advFresh = items.map((it, i) => mostArticles[i] && it.c.updated_at === latestUpdated);
 
   const rows: Array<{ label: string; text: (it: CmpItem) => string; adv?: boolean[] }> = [
-    { label: "条件の一致", text: (it) => `${it.match} / ${CRITERIA.length}　${it.matchLabel}`, adv: advMatch },
+    /* 基準の条件が無いとき（検索履歴なし）は「条件の一致」行そのものを出さない */
+    ...(criteria.length
+      ? [{ label: "条件の一致", text: (it: CmpItem) => `${it.match} / ${criteria.length}　${it.matchLabel}`, adv: advMatch }]
+      : []),
     { label: "加工・工程", text: (it) => it.c.specialty_process_sub || it.c.specialty_process || "—" },
     { label: "対応材質", text: (it) => (it.materials.length ? it.materials.join("／") : "—") },
     { label: "対応ロット", text: (it) => lotText(it.c), adv: advLot },
@@ -150,17 +178,19 @@ export default async function ComparePage() {
 
   const panelCompare = (
     <>
-      <div className="cond-row">
-        <div className="cond-row__left">
-          <p className="cond-row__label">比較の基準にしている検索条件</p>
-          <div className="cond-row__chips">
-            {BASE_CHIPS.map((chip) => (
-              <span key={chip} className="cond-chip">{chip}</span>
-            ))}
+      {chips.length > 0 ? (
+        <div className="cond-row">
+          <div className="cond-row__left">
+            <p className="cond-row__label">比較の基準にしている検索条件</p>
+            <div className="cond-row__chips">
+              {chips.map((chip) => (
+                <span key={chip} className="cond-chip">{chip}</span>
+              ))}
+            </div>
           </div>
+          <Link className="c-btn" href="/search">条件を変更</Link>
         </div>
-        <Link className="c-btn" href="/search">条件を変更</Link>
-      </div>
+      ) : null}
 
       {items.length > 0 ? (
         <div className="cmp-scroll reveal" id="cmpScroll">
@@ -256,29 +286,55 @@ export default async function ComparePage() {
 
   const panelHistory = !user ? (
     <p className="cmp-empty">相談の履歴はありません。<Link href="/login">ログイン</Link>すると、送信した相談の履歴を確認できます。</p>
-  ) : history.length > 0 ? (
-    <div className="cmp-panel">
-      <div className="saved__grid">
-        {history.map((h) => (
-          <div key={h.id} className="saved-card">
-            <div className="saved-card__tags">
-              <span className="tag" style={{ fontWeight: 400 }}>{HISTORY_TYPE[h.type] ?? "相談"}</span>
-            </div>
-            <h3>{[h.process, h.material, h.quantity].filter(Boolean).join("／") || "相談"}</h3>
-            <p>送信 {fmtDate(h.created_at)}</p>
-          </div>
-        ))}
-      </div>
-    </div>
   ) : (
-    <p className="cmp-empty">相談の履歴はまだありません。</p>
+    <>
+      {history.length > 0 ? (
+        <div className="cmp-panel">
+          <div className="saved__grid">
+            {history.map((h) => (
+              <div key={h.id} className="saved-card">
+                <div className="saved-card__tags">
+                  <span className="tag" style={{ fontWeight: 400 }}>{HISTORY_TYPE[h.type] ?? "相談"}</span>
+                </div>
+                <h3>{inquiryTitle(h)}</h3>
+                <p>送信 {fmtDate(h.created_at)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="cmp-empty">送信した相談はまだありません。</p>
+      )}
+
+      {/* 下書きは「送信 日付」ではなく「保存 日付」。開けば続きから入力できる */}
+      {drafts.length > 0 ? (
+        <section className="cmp-drafts">
+          <div className="sec-ttl">
+            <h2>下書き</h2>
+            <p className="note">{drafts.length}</p>
+          </div>
+          <div className="saved__grid">
+            {drafts.map((d) => (
+              <Link key={d.id} className="saved-card" href={`/inquiry/new?draft=${d.id}`}>
+                <div className="saved-card__tags">
+                  <span className="tag" style={{ fontWeight: 400 }}>下書き</span>
+                  <span className="tag" style={{ fontWeight: 400 }}>{HISTORY_TYPE[d.type] ?? "相談"}</span>
+                </div>
+                <h3>{inquiryTitle(d)}</h3>
+                <p>保存 {fmtDate(d.created_at)}・続きから入力する</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </>
   );
 
   return (
     <>
       <Header variant="sub" />
 
-      <main className="container-wide cmp-main">
+      <main className="container-wide cmp-main" id="main" tabIndex={-1}>
         <div className="page-head">
           <h1 className="page-head__ttl">保存・比較</h1>
           <div className="page-head__actions">

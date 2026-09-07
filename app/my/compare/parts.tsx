@@ -25,6 +25,7 @@ export function CompareTabs({
   panelHistory: ReactNode;
 }) {
   const [tab, setTab] = useState<TabId>("compare");
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   /* ヘッダーの「保存した記事 N」など、URL から開くタブを指定できるようにする */
   useEffect(() => {
@@ -54,32 +55,59 @@ export function CompareTabs({
     }
   };
 
-  const tabs: Array<{ id: TabId; label: ReactNode }> = [
-    { id: "compare", label: <>比較 <span data-cmp-count>{nCompare}</span>社</> },
-    { id: "companies", label: <>保存した企業 {nCompanies}</> },
-    { id: "articles", label: <>保存した記事 {nArticles}</> },
-    { id: "history", label: <>相談の履歴 {nHistory}</> },
+  /* 「保存した記事」はページ下部のセクションが実体なので、そこを aria-controls の先にする */
+  const tabs: Array<{ id: TabId; label: ReactNode; controls: string }> = [
+    { id: "compare", label: <>比較 <span data-cmp-count>{nCompare}</span>社</>, controls: "panel-compare" },
+    { id: "companies", label: <>保存した企業 {nCompanies}</>, controls: "panel-companies" },
+    { id: "articles", label: <>保存した記事 {nArticles}</>, controls: "savedArticles" },
+    { id: "history", label: <>相談の履歴 {nHistory}</>, controls: "panel-history" },
   ];
+
+  /* 矢印キー / Home / End でタブを移動（WAI-ARIA の tabs パターン） */
+  const onKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const keys = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp", "Home", "End"];
+    if (!keys.includes(e.key)) return;
+    e.preventDefault();
+    const last = tabs.length - 1;
+    const next =
+      e.key === "Home" ? 0
+      : e.key === "End" ? last
+      : e.key === "ArrowRight" || e.key === "ArrowDown" ? (index + 1) % tabs.length
+      : (index - 1 + tabs.length) % tabs.length;
+    select(tabs[next].id);
+    tabRefs.current[next]?.focus();
+  };
 
   return (
     <>
       <div className="tabs" role="tablist" aria-label="保存・比較の切り替え">
-        {tabs.map((t) => (
+        {tabs.map((t, i) => (
           <button
             key={t.id}
+            ref={(el) => { tabRefs.current[i] = el; }}
+            id={`tab-${t.id}`}
             className={"tab" + (tab === t.id ? " is-active" : "")}
             type="button"
             role="tab"
             aria-selected={tab === t.id}
+            aria-controls={t.controls}
+            tabIndex={tab === t.id ? 0 : -1}
+            onKeyDown={(e) => onKeyDown(e, i)}
             onClick={() => select(t.id)}
           >
             {t.label}
           </button>
         ))}
       </div>
-      <div hidden={tab === "companies" || tab === "history"}>{panelCompare}</div>
-      <div hidden={tab !== "companies"}>{panelCompanies}</div>
-      <div hidden={tab !== "history"}>{panelHistory}</div>
+      <div id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" hidden={tab === "companies" || tab === "history"}>
+        {panelCompare}
+      </div>
+      <div id="panel-companies" role="tabpanel" aria-labelledby="tab-companies" hidden={tab !== "companies"}>
+        {panelCompanies}
+      </div>
+      <div id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden={tab !== "history"}>
+        {panelHistory}
+      </div>
     </>
   );
 }
