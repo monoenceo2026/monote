@@ -103,16 +103,34 @@ function conditionFilterSql(conditionIds: number[], joinTable: string, fkCol: st
   return { sql, params };
 }
 
+/**
+ * 自由入力を検索語に割る。空白区切りで最大8語。
+ * LIKEのワイルドカード（% _）はESCAPE句を足さずに済むよう単純に取り除く。
+ */
+function keywordTokens(q: string | undefined): string[] {
+  const raw = (q ?? "").trim();
+  if (!raw) return [];
+  return [...new Set(
+    raw.split(/[\s\u3000]+/)
+      .map((t) => t.replace(/[%_]/g, ""))
+      .filter((t) => t.length > 0),
+  )].slice(0, 8);
+}
+
 export function searchCompanies(f: SearchFilters): Array<Company & { match_count: number }> {
   const cond = conditionFilterSql(f.conditionIds ?? [], "company_conditions", "company_id");
   const params: unknown[] = [];
   let where = "1=1";
-  if (f.q?.trim()) {
-    const like = `%${f.q.trim().split(/\s+/).join("%")}%`;
-    where += ` AND (t.name LIKE ? OR t.description LIKE ? OR t.specialty_process LIKE ? OR t.specialty_process_sub LIKE ?
-      OR t.specialty_lot LIKE ? OR t.specialty_quality LIKE ? OR t.industries LIKE ? OR t.equipment LIKE ?
-      OR t.prefecture LIKE ? OR t.city LIKE ?)`;
-    params.push(like, like, like, like, like, like, like, like, like, like);
+  /* 語ごとにANDで判定する。1本の `%A%B%` にすると語順が一致しないとヒットしない
+     （「小ロット ステンレス」で「ステンレス…小ロット」が漏れる） */
+  const COMPANY_TEXT_COLS = [
+    "t.name", "t.description", "t.specialty_process", "t.specialty_process_sub",
+    "t.specialty_lot", "t.specialty_quality", "t.industries", "t.equipment",
+    "t.prefecture", "t.city",
+  ];
+  for (const token of keywordTokens(f.q)) {
+    where += ` AND (${COMPANY_TEXT_COLS.map((c) => `${c} LIKE ?`).join(" OR ")})`;
+    params.push(...COMPANY_TEXT_COLS.map(() => `%${token}%`));
   }
   const matchExpr = f.conditionIds?.length
     ? `(SELECT COUNT(*) FROM company_conditions m WHERE m.company_id = t.id AND m.condition_id IN (${f.conditionIds.map(() => "?").join(",")}))`
@@ -134,10 +152,10 @@ export function searchArticles(f: SearchFilters): Article[] {
   const cond = conditionFilterSql(f.conditionIds ?? [], "article_conditions", "article_id");
   const params: unknown[] = [];
   let where = "t.status = 'published'";
-  if (f.q?.trim()) {
-    const like = `%${f.q.trim().split(/\s+/).join("%")}%`;
-    where += ` AND (t.title LIKE ? OR t.excerpt LIKE ? OR t.tag1 LIKE ? OR t.tag2 LIKE ?)`;
-    params.push(like, like, like, like);
+  const ARTICLE_TEXT_COLS = ["t.title", "t.excerpt", "t.tag1", "t.tag2"];
+  for (const token of keywordTokens(f.q)) {
+    where += ` AND (${ARTICLE_TEXT_COLS.map((c) => `${c} LIKE ?`).join(" OR ")})`;
+    params.push(...ARTICLE_TEXT_COLS.map(() => `%${token}%`));
   }
   const sql = `SELECT t.*, c.name AS company_name, c.slug AS company_slug
     FROM articles t JOIN companies c ON c.id = t.company_id
