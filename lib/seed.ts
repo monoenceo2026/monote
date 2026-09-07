@@ -248,10 +248,14 @@ export function runSeed(db: Database) {
       const matList = [...new Set(materials)];
       const procMain = procList[0];
 
+      /* 「確認済み」バッジ(verified)と「情報の確認」日(profile_confirmed_at)は同じ運営確認を指す。
+         別々に振ると、バッジは付くのに「未確認」と出る企業ができてしまう */
+      let verified = 0;
+
       const id = insCompany.run({
         slug: `c-${String(i + 6).padStart(3, "0")}`,
         name: name.includes("株式") ? name : (rand() < 0.5 ? "株式会社" + name : name),
-        verified: rand() < 0.6 ? 1 : 0,
+        verified: (verified = rand() < 0.6 ? 1 : 0),
         prefecture, city,
         employees: ["1〜9名", "10〜29名", "30〜99名", "100名以上"][Math.floor(rand() * 4)],
         founded,
@@ -268,7 +272,7 @@ export function runSeed(db: Database) {
         contact_hours: "平日9:00〜17:00",
         hard_conditions: "", response_days: 1 + Math.floor(rand() * 4),
         trade_terms: "応相談", address: `${prefecture}${city}`, completeness: 30 + Math.floor(rand() * 60),
-        confirmed: rand() < 0.6 ? iso(30 + Math.floor(rand() * 60)) : null,
+        confirmed: verified ? iso(30 + Math.floor(rand() * 60)) : null,
         updated: iso(daysAgo),
       }).lastInsertRowid as number;
 
