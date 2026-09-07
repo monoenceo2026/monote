@@ -64,6 +64,17 @@ const NOISE = [
   "、", "。", "・", "，", "．", "（", "）", "(", ")", "「", "」", "･", "／", "/", "-", "ー", "〜", "~", "＋", "+",
 ];
 
+/**
+ * 条件に解決したあともキーワードとして残す語（地名）。
+ * 「滋賀県」はエリア=関西に解決するが、キーワードを残さないと
+ * 関西全域が返り、リンク元の県と結果が食い違う。全文検索は
+ * prefecture / city を見るため、残せば県・市まで絞り込める。
+ */
+const NARROWING = new Set(
+  ["大阪", "兵庫", "京都", "滋賀", "奈良", "東京", "神奈川", "埼玉", "千葉", "茨城",
+   "神戸", "尼崎", "八尾", "東大阪", "堺市", "横浜", "川崎"].map((w) => w),
+);
+
 const norm = (s: string) =>
   s.normalize("NFKC").toLowerCase().replace(/[\s　]+/g, "").replace(/[＋+]/g, "+");
 
@@ -104,7 +115,7 @@ export function parseQuery(q: string): ParsedQuery {
 
   /* 条件に使った語とノイズ語を削って、残りをキーワードとして扱う */
   let rest = raw;
-  for (const w of [...hitWords].sort((a, b) => b.length - a.length)) {
+  for (const w of [...hitWords].filter((w) => !NARROWING.has(w)).sort((a, b) => b.length - a.length)) {
     rest = rest.split(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi")).join(" ");
   }
   for (const w of [...NOISE].sort((a, b) => b.length - a.length)) {

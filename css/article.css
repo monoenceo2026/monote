@@ -159,18 +159,22 @@
 .share-btn.is-copied {
   background: var(--bg);
 }
+.share-btn.is-failed {
+  background: #FBF1F1;
+  border-color: #E0B4B4;
+  color: #A03A3A;
+}
 
-/* ---------- 記事ヘッダー画像・図解プレースホルダー ---------- */
-.article-hero {
+/* ---------- 記事ヘッダー画像 ---------- */
+.article-hero-photo {
+  display: block;
   margin-top: 18px;
+  width: 100%;
   height: 192px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--bg);
 }
-.article-fig {
-  margin-top: 16px;
-  height: 192px;
-}
-.article-hero span,
-.article-fig span { font-size: 14px; }
 
 /* ---------- リード文 ---------- */
 .article-lead {
@@ -431,7 +435,7 @@
   .article-meta__info { gap: 8px 12px; font-size: 13px; }
   .article-meta__actions .btn { flex: 1 1 0; }
 
-  .article-hero, .article-fig { height: 148px; }
+  .article-hero-photo { height: 148px; }
 
   .article-sec__ttl { font-size: 20px; }
   .article-sec__ttl .num { width: 30px; }

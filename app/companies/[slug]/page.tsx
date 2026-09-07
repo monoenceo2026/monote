@@ -236,7 +236,7 @@ export default async function CompanyPage({
                 <div className="works" data-stagger="0.07">
                   {works.map((w) => (
                     <div className="work-card reveal" key={w.id}>
-                      <div className="ph-thumb work-card__thumb"><span>記事サムネイル</span></div>
+                      <div className="ph-thumb work-card__thumb" aria-hidden="true"></div>
                       <div className="work-card__body">
                         <p className="work-card__ttl">{w.title}</p>
                         <p className="work-card__spec">{w.spec}</p>
@@ -259,7 +259,11 @@ export default async function CompanyPage({
                 <div className="co-articles" data-stagger="0.07">
                   {articles.map((a) => (
                     <Link className="art-row reveal" href={`/articles/${a.slug}`} key={a.id}>
-                      <div className="ph-thumb art-row__thumb"></div>
+                      {a.thumb ? (
+                        <img className="art-row__photo" src={a.thumb} alt="" loading="lazy" decoding="async" />
+                      ) : (
+                        <div className="ph-thumb art-row__thumb"></div>
+                      )}
                       <p className="art-row__ttl">{a.title}</p>
                       <p className="art-row__date">{fmtDate(a.published_at)}</p>
                     </Link>

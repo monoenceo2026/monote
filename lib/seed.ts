@@ -243,7 +243,10 @@ export function runSeed(db: Database) {
       const lotMax = [300, 500, 1000, 2000, 5000][Math.floor(rand() * 5)];
       const founded = 1955 + Math.floor(rand() * 55);
       const daysAgo = Math.floor(rand() * 90);
-      const procMain = processes[0];
+      /* 同じ工程・材質が2回入ると「組立／組立」のような表示になるため重複を落とす */
+      const procList = [...new Set(processes)];
+      const matList = [...new Set(materials)];
+      const procMain = procList[0];
 
       const id = insCompany.run({
         slug: `c-${String(i + 6).padStart(3, "0")}`,
@@ -252,8 +255,8 @@ export function runSeed(db: Database) {
         prefecture, city,
         employees: ["1〜9名", "10〜29名", "30〜99名", "100名以上"][Math.floor(rand() * 4)],
         founded,
-        description: `${procMain}を中心に、${materials[0] ?? "各種素材"}の加工を${lots[0] ?? "小ロット"}から受けています。`,
-        sp: `${materials[0] ?? ""}の${procMain}`, sps: processes.join("／"),
+        description: `${procMain}を中心に、${matList[0] ?? "各種素材"}の加工を${lots[0] ?? "小ロット"}から受けています。`,
+        sp: `${matList[0] ?? ""}の${procMain}`, sps: procList.join("／"),
         sl: `${inSUS ? 1 : 10}個〜${lotMax.toLocaleString()}個／最短${deliveryMin}日`, sls: "繰り返し発注にも対応",
         sq: rand() < 0.5 ? "ISO9001" : "自主検査", sqs: "出荷前検査を実施",
         lot_min: inSUS ? 1 : 10, lot_max: lotMax, precision_mm: precision,
@@ -269,8 +272,8 @@ export function runSeed(db: Database) {
         updated: iso(daysAgo),
       }).lastInsertRowid as number;
 
-      processes.forEach((p) => link(id, "process:" + p));
-      materials.forEach((m) => link(id, "material:" + m));
+      procList.forEach((p) => link(id, "process:" + p));
+      matList.forEach((m) => link(id, "material:" + m));
       lots.forEach((l) => link(id, "lot:" + l));
       if (inFast) link(id, "delivery:短納期（7日以内）");
       if (rand() < 0.55) link(id, "cert:ISO9001");

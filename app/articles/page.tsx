@@ -35,7 +35,11 @@ export default async function ArticlesIndexPage() {
           <div className="articles-grid" data-stagger="0.05">
             {articles.map((a) => (
               <Link key={a.id} className="article-card reveal" href={`/articles/${a.slug}`}>
-                <div className="ph-thumb article-card__thumb"><span>記事サムネイル</span></div>
+                {a.thumb ? (
+                  <img className="article-card__photo" src={a.thumb} alt="" loading="lazy" decoding="async" />
+                ) : (
+                  <div className="ph-thumb article-card__thumb"><span>記事サムネイル</span></div>
+                )}
                 <div className="article-card__body">
                   <div className="article-card__tags">
                     {a.tag1 ? <span className="tag" style={{ fontWeight: 400 }}>{a.tag1}</span> : null}

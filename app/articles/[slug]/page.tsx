@@ -166,7 +166,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               </div>
             </div>
 
-            <div className="ph-thumb article-hero"><span>記事ヘッダー画像（任意・なくても投稿可）</span></div>
+            {article.thumb ? (
+              <img className="article-hero-photo" src={article.thumb} alt="" decoding="async" />
+            ) : null}
 
             <p className="article-lead">{article.excerpt}</p>
 
@@ -181,9 +183,6 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                     <p key={j}>{p}</p>
                   ))}
                 </div>
-                {i === 0 ? (
-                  <div className="ph-thumb article-fig"><span>作業風景・図解</span></div>
-                ) : null}
               </section>
             ))}
 

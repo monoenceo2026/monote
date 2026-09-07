@@ -102,35 +102,62 @@ export function SaveArticleButton({
 /* ---------- 共有（URLコピー） ---------- */
 
 export function ShareButton() {
-  const [copied, setCopied] = useState(false);
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
-  const onClick = () => {
-    const done = () => {
-      setCopied(true);
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => setCopied(false), 1600);
-    };
-    const url = location.href;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(done, done);
-    } else {
-      done();
+  /* コピーできていないのに「コピーしました」と出すと嘘になるので、成否を分けて表示する */
+  const settle = (ok: boolean) => {
+    setState(ok ? "copied" : "failed");
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setState("idle"), ok ? 1600 : 2600);
+  };
+
+  /* clipboard API が使えない環境（http / 古いブラウザ）向けのフォールバック */
+  const legacyCopy = (url: string) => {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
     }
   };
 
+  const onClick = () => {
+    const url = location.href;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(
+        () => settle(true),
+        () => settle(legacyCopy(url)),
+      );
+      return;
+    }
+    settle(legacyCopy(url));
+  };
+
+  const label = state === "copied" ? "コピーしました" : state === "failed" ? "コピーできません" : "共有";
+
   return (
     <button
-      className={`btn btn--box btn--outline-thin btn--sm share-btn${copied ? " is-copied" : ""}`}
+      className={`btn btn--box btn--outline-thin btn--sm share-btn${state === "copied" ? " is-copied" : ""}${state === "failed" ? " is-failed" : ""}`}
       type="button"
       id="shareBtn"
+      aria-live="polite"
+      title={state === "failed" ? "自動コピーに対応していません。アドレスバーのURLをコピーしてください" : "このページのURLをコピー"}
       onClick={onClick}
     >
-      {copied ? "コピーしました" : "共有"}
+      {label}
     </button>
   );
 }

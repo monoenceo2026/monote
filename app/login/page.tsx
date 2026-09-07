@@ -7,8 +7,13 @@ import "@/css/login.css";
 
 export const metadata = { title: "ログイン" };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const user = await currentUser();
+  const { error } = await searchParams;
 
   return (
     <>
@@ -19,6 +24,11 @@ export default async function LoginPage() {
           β版のデモ環境です。デモアカウントを選んでログインすると、保存・比較・相談・企業管理まで一通り試せます。
           {user ? `（現在：${user.name} 様でログイン中）` : ""}
         </p>
+        {error ? (
+          <p className="login__error" role="alert">
+            ログインできませんでした。下のデモアカウントからお選びください。
+          </p>
+        ) : null}
         <div className="login__cards">
           <form action={loginAction} className="login-card">
             <input type="hidden" name="userId" value="1" />

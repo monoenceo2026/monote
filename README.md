@@ -7,7 +7,7 @@ Figmaデザイン: https://www.figma.com/design/gnam2ewPe2dZ2ivBazOgBq/MONOTE
 
 ## 技術構成
 
-- **Next.js 15**（App Router / TypeScript / Server Components + Server Actions）
+- **Next.js 16**（App Router / TypeScript / Server Components + Server Actions）
 - **SQLite**（better-sqlite3）— 初回起動時に `data/monote.db` を自動作成し、デモ用データをシード
   - 掲載企業128社・技術記事342本・検索条件タクソノミー・行動イベント（表示/クリック/保存/相談）
 - スタイルはプレーンCSS（`css/`）。デザイントークンは `css/base.css`
@@ -47,6 +47,35 @@ DBを作り直す場合は `data/monote.db*` を削除して再起動（自動�
 | `/signup` | 企業登録（対応条件）。登録した会社は実際に検索でヒット |
 | `/admin` | 企業管理ダッシュボード。KPI・検索条件別成果・受信箱（返信/対応不可） |
 | `/admin/articles/new` | 記事エディタ。自動保存（下書き）と公開 |
+
+## 環境変数
+
+| 変数 | 必須 | 用途 |
+|---|---|---|
+| `MONOTE_SESSION_SECRET` | 本番で必須 | セッションCookieのHMAC署名鍵。長いランダム文字列を設定します。未設定のまま本番起動すると起動ごとに鍵が変わり、デプロイやコールドスタートのたびに全ユーザーがログアウトされます |
+| `NEXT_PUBLIC_SITE_URL` | 推奨 | 正規URL。OGP・`robots.txt`・`sitemap.xml` の絶対URL生成に使います。未設定時は `https://monote.jp` |
+
+`.env.local`（ローカル）またはホスティングの環境変数に設定してください。
+
+```bash
+# 鍵の生成例
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
+
+## ローンチ前の申し送り
+
+以下はデモ・検証用の実装のまま残っている箇所です。実ユーザーを迎える前に対応が必要です。
+
+1. **認証はデモ用**。`/login` はパスワードを検証せず、あらかじめ用意した2つのデモアカウントを
+   ワンクリックで切り替えるだけの仕組みです（`app/actions.ts` の `loginAction` は
+   デモユーザーID以外を拒否します）。実運用ではメール＋パスワードやOAuthなどの
+   本物の認証と、企業アカウントの本人確認フローに差し替えてください。
+2. **企業登録は未審査**。`/signup` から登録した企業は `verified = 0` で保存され、
+   認証バッジは付きません。掲載前の審査フローは未実装です。
+3. **書き込みの永続性**。サーバーレス（Vercel）ではSQLiteが `/tmp` に作られるため、
+   保存・比較・相談・記事公開はインスタンスローカルかつ一時的です。上の「デプロイ」を参照してください。
+4. **相談メールの送信は未接続**。相談は受信箱（DB）に届きますが、企業への
+   メール通知は行っていません。送信基盤の接続が必要です。
 
 ## デプロイ
 

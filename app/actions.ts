@@ -15,9 +15,13 @@ const REVALIDATABLE = new Set([
   "/admin",
 ]);
 
+/** 詳細ページはスラッグ1階層のみ許可（../ などを渡させない） */
+const DETAIL_PATH = /^\/(companies|articles)\/[a-z0-9][a-z0-9-]{0,80}$/;
+
 function revalidate(path: string) {
+  if (typeof path !== "string") return;
   if (REVALIDATABLE.has(path)) revalidatePath(path);
-  else if (path.startsWith("/companies/") || path.startsWith("/articles/")) revalidatePath(path);
+  else if (DETAIL_PATH.test(path)) revalidatePath(path);
 }
 
 /* ---------- saves / compare (shared across pages) ---------- */

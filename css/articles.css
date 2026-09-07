@@ -31,6 +31,15 @@
   height: 120px;
   border-radius: 8px 8px 0 0;
 }
+.article-card__photo {
+  display: block;
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border: 0.5px solid var(--line);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+}
 .article-card__body {
   background: var(--white);
   border: 0.5px solid var(--line);
@@ -81,7 +90,8 @@
     padding: 16px;
     background: var(--white);
   }
-  .article-card__thumb { width: 120px; height: 80px; flex-shrink: 0; border-radius: 4px; }
+  .article-card__thumb,
+  .article-card__photo { width: 120px; height: 80px; flex-shrink: 0; border-radius: 4px; border-bottom: 0.5px solid var(--line); }
   .article-card__thumb span { font-size: 10px; }
   .article-card__body { border: none; padding: 0; justify-content: center; }
   .article-card__tags { display: none; }

@@ -389,10 +389,16 @@
   transform: translateY(-2px);
   box-shadow: var(--shadow-card);
 }
-.art-row__thumb {
+.art-row__thumb,
+.art-row__photo {
   width: 102px;
   height: 64px;
   flex-shrink: 0;
+}
+.art-row__photo {
+  object-fit: cover;
+  border-radius: 4px;
+  border: 0.5px solid var(--line);
 }
 .art-row__ttl {
   flex: 1;
@@ -600,7 +606,7 @@
 
   /* 記事 */
   .art-row { gap: 16px; }
-  .art-row__thumb { width: 80px; height: 52px; }
+  .art-row__thumb, .art-row__photo { width: 80px; height: 52px; }
   .art-row__ttl { font-size: 14px; }
 
   /* SP 下部固定バー */
